@@ -98,6 +98,125 @@ autoxan/
 
 ---
 
+## Example Sessions
+
+### Example 1: Planning a Feature (from above)
+**Organic:** Brainstorm what the feature should do
+**Rigid:** Xander creates implementation plan, writes tickets, queues PRs
+
+---
+
+### Example 2: Research & Decision Making
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ORGANIC CONVERSATION (Hermes)                 │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  You: "I'm thinking about switching our database"               │
+│  Hermes: "What's driving that? Performance, cost, features?"    │
+│                                                                  │
+│  You: "Mostly cost, we're paying too much for Postgres"         │
+│  Hermes: "Let me check some alternatives..."                    │
+│         [Quick lookup on managed DB pricing]                    │
+│  Hermes: "PlanetScale and Neon both have generous free tiers.   │
+│           CockroachDB has good scaling. What's your priority?"  │
+│                                                                  │
+│  You: "We need something that works with Prisma"                │
+│  Hermes: "All three work with Prisma. Want me to have Xander    │
+│           do a deep comparison with migration complexity?"      │
+│                                                                  │
+│  You: "Yeah, include cost projections for our usage"            │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓ Dispatch
+┌─────────────────────────────────────────────────────────────────┐
+│                    RIGID WORK (Xander)                          │
+├─────────────────────────────────────────────────────────────────┤
+│  • Deep research: pricing tiers, feature comparison             │
+│  • Analyze current usage patterns                               │
+│  • Calculate cost projections (30/60/90 day)                    │
+│  • Evaluate migration complexity with Prisma                    │
+│  • Create comparison document                                   │
+│  • Queue: recommendation report                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Example 3: Quick Errand While Driving
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ORGANIC CONVERSATION (Hermes)                 │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  You: "I need to send a gift to mom for her birthday"           │
+│  Hermes: "When's her birthday?"                                 │
+│                                                                  │
+│  You: "Next Tuesday"                                            │
+│  Hermes: "What kind of gift? I can look up options"             │
+│                                                                  │
+│  You: "Something cozy, she likes candles and blankets"          │
+│  Hermes: "Found some nice gift sets... price range?"            │
+│                                                                  │
+│  You: "Around $50-75"                                           │
+│  Hermes: "Got a few good options. Want Xander to order          │
+│           the best one and handle shipping?"                    │
+│                                                                  │
+│  You: "Yes, use my default payment and ship to her address"     │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓ Dispatch
+┌─────────────────────────────────────────────────────────────────┐
+│                    RIGID WORK (Xander)                          │
+├─────────────────────────────────────────────────────────────────┤
+│  • Select best gift option within criteria                      │
+│  • Look up mom's shipping address                               │
+│  • Process order with saved payment                             │
+│  • Confirm delivery by Tuesday                                  │
+│  • Queue: order confirmation notification                       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Example 4: Debugging a Problem
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ORGANIC CONVERSATION (Hermes)                 │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  You: "The API is slow today, users are complaining"            │
+│  Hermes: "Let me check... which endpoints?"                     │
+│                                                                  │
+│  You: "The main dashboard endpoint"                             │
+│  Hermes: "I see some recent commits to that area. Also          │
+│           looks like there's a new database index missing.      │
+│           Want me to have Xander investigate deeper?"           │
+│                                                                  │
+│  You: "Yes, and fix it if it's straightforward"                 │
+│  Hermes: "On it. Should he create a PR or commit directly?"     │
+│                                                                  │
+│  You: "PR, I want to review it first"                           │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓ Dispatch
+┌─────────────────────────────────────────────────────────────────┐
+│                    RIGID WORK (Xander)                          │
+├─────────────────────────────────────────────────────────────────┤
+│  • Profile the slow endpoint                                    │
+│  • Identify missing indexes or N+1 queries                      │
+│  • Create migration for index if needed                         │
+│  • Test fix locally                                             │
+│  • Create PR with before/after benchmarks                       │
+│  • Queue: PR ready for review notification                      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Agent Responsibilities
 
 | Agent | Role | Capabilities |
