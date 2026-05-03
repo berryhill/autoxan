@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A React Native app that provides voice interaction with **Hermes** (local phone agent) which acts as a gateway to **Xander** (remote workstation agent) for complex tasks. Triggered by "Hey Google, talk to Hermes" via Google Assistant Routine. Music pauses during the conversation session and resumes when you exit.
+A React Native app for conversational planning with **Hermes** (phone agent). Hermes orchestrates meaningful sessions - you discuss ideas, do light research together, and shape plans. When ready, Hermes dispatches the real work to **Xander** (workstation) which plans in detail and queues execution. Like having a smart assistant to brainstorm with in the car.
 
 ---
 
@@ -25,57 +25,103 @@ autoxan/
 │                                                                  │
 │  ┌──────────────────┐     ┌──────────────────────────────────┐  │
 │  │ Google Assistant │────▶│ Hermes Voice App (React Native)  │  │
-│  │ "Talk to Hermes" │     │                                  │  │
-│  └──────────────────┘     │  • Takes audio focus             │  │
-│                           │  • STT/TTS                        │  │
-│                           │  • Voice interface layer          │  │
+│  │ "Talk to Hermes" │     │  • Voice interface (STT/TTS)     │  │
+│  └──────────────────┘     │  • Audio focus management         │  │
 │                           └────────────────┬─────────────────┘  │
 │                                            │                     │
 │                                            ▼                     │
 │                           ┌──────────────────────────────────┐  │
-│                           │ HERMES (Local Agent in Termux)   │  │
-│                           │ http://localhost:3000            │  │
+│                           │ HERMES (Phone Agent)             │  │
 │                           │                                  │  │
-│                           │ • Simple conversation tasks      │  │
-│                           │ • Quick local responses          │  │
-│                           │ • Gateway to Xander              │  │
-│                           │ • Improves phone UX on the fly   │  │
+│                           │ Session Orchestrator:            │  │
+│                           │ • Conversational planning        │  │
+│                           │ • Light research (quick lookups) │  │
+│                           │ • Shapes ideas with you          │  │
+│                           │ • Dispatches work to Xander      │  │
+│                           │                                  │  │
+│                           │ Like brainstorming with a smart  │  │
+│                           │ assistant in the car             │  │
 │                           └────────────────┬─────────────────┘  │
 │                                            │                     │
 └────────────────────────────────────────────│─────────────────────┘
-                                             │ MCP (over network)
+                                             │ Dispatch (MCP)
                                              ▼
                            ┌──────────────────────────────────────┐
-                           │ XANDER (Workstation Agent)           │
-                           │ Remote: https://workstation/mcp      │
+                           │ XANDER (Workstation)                 │
                            │                                      │
-                           │ • Web research                       │
-                           │ • Complex multi-step tasks           │
-                           │ • Heavy computation                  │
+                           │ Execution Engine:                    │
+                           │ • Receives dispatched work           │
+                           │ • Creates detailed plans             │
+                           │ • Queues tasks for execution         │
+                           │ • Heavy research & analysis          │
                            │ • Full MCP tool access               │
-                           │ • More capabilities than Gemini      │
+                           │ • Async execution while you drive    │
                            └──────────────────────────────────────┘
+```
+
+---
+
+## How It Works
+
+### Session Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    CONVERSATIONAL SESSION                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  You: "I need to plan a new feature for the app"                │
+│  Hermes: "Sure, what kind of feature are you thinking?"         │
+│                                                                  │
+│  You: "Something for user notifications"                        │
+│  Hermes: "Let me look up current best practices..."             │
+│         [Light research - quick web lookup]                     │
+│  Hermes: "I see push notifications and in-app alerts are        │
+│           common. What's the main use case?"                    │
+│                                                                  │
+│  You: "Alerting users when their tasks are due"                 │
+│  Hermes: "Got it. So we'd need a notification service,          │
+│           scheduling, and user preferences. Should I            │
+│           dispatch this to Xander for detailed planning?"       │
+│                                                                  │
+│  You: "Yes, have Xander create a full plan"                     │
+│  Hermes: "Dispatching to Xander. He'll create a detailed        │
+│           implementation plan and queue the tasks."             │
+│         [Dispatch to workstation]                               │
+│                                                                  │
+│  You: "Thanks, goodbye"                                         │
+│  Hermes: "Xander's working on it. I'll notify you when          │
+│           the plan is ready. Safe travels!"                     │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Agent Responsibilities
 
-| Agent | Location | Responsibilities |
-|-------|----------|------------------|
-| **Voice App** | React Native | Audio capture, STT, TTS, UI |
-| **Hermes** | Phone (Termux) | Gateway agent, simple tasks, routing, UX optimization |
-| **Xander** | Workstation | Complex tasks, web research, full MCP tools, heavy lifting |
+| Agent | Role | Capabilities |
+|-------|------|--------------|
+| **Hermes (Phone)** | Session Orchestrator | Conversational planning, light research, dispatch |
+| **Xander (Workstation)** | Execution Engine | Detailed planning, task queuing, heavy lifting |
 
-### Task Routing Logic (Hermes decides)
+### Hermes Does
 
-| Task Type | Handled By | Example |
-|-----------|------------|---------|
-| Simple Q&A | Hermes (local) | "What time is it?", "Set a reminder" |
-| Quick lookups | Hermes (local) | "What's on my calendar?" |
-| Web research | Xander (remote) | "Research the latest on X topic" |
-| Complex analysis | Xander (remote) | "Analyze this document and summarize" |
-| Multi-step workflows | Xander (remote) | "Create a PR for this issue" |
+- Meaningful conversation and brainstorming
+- Light research (quick lookups to inform discussion)
+- Shapes ideas collaboratively with you
+- Summarizes and confirms understanding
+- Dispatches work packages to Xander
+- Tracks what's been dispatched
+
+### Xander Does
+
+- Receives dispatched work from Hermes
+- Creates detailed implementation plans
+- Queues tasks for execution
+- Heavy research and analysis
+- Executes tasks asynchronously
+- Reports back when complete
 
 ---
 
@@ -87,8 +133,8 @@ autoxan/
 | Speech-to-Text | `@react-native-voice/voice` |
 | Text-to-Speech | `expo-speech` |
 | Hermes (Phone) | Node.js in Termux |
-| Xander (Workstation) | MCP server exposing agents |
-| Communication | HTTP (local), MCP (remote) |
+| Xander (Workstation) | MCP server with task queue |
+| Communication | HTTP (local), MCP (dispatch) |
 
 ---
 
@@ -97,71 +143,61 @@ autoxan/
 ```
 "Hey Google, talk to Hermes"
         ↓
-🔇 Spotify/media PAUSES
+🔇 Music PAUSES
         ↓
-📱 Voice App opens → connects to Hermes (local)
+📱 Voice App opens
         ↓
-🎤 "What's the weather like?"
-        ↓
-┌──────────────────────────────────────┐
-│ HERMES evaluates:                    │
-│   Simple task? → Handle locally      │
-│   Complex task? → Route to Xander    │
-└──────────────────────────────────────┘
-        ↓
-🔊 Response via TTS
-        ↓
-🎤 Listening for next input...
-        ↓
-"Research the best practices for X"
+🎤 Conversational session begins
         ↓
 ┌──────────────────────────────────────┐
-│ HERMES: Complex task → calling Xander│
-│ XANDER: Web research, analysis...    │
-│ XANDER: Returns comprehensive answer │
-│ HERMES: Delivers to user             │
+│   PLANNING CONVERSATION              │
+│                                      │
+│   You ←→ Hermes                      │
+│   • Discuss ideas                    │
+│   • Hermes does light research       │
+│   • Shape the plan together          │
+│   • Refine until ready               │
 └──────────────────────────────────────┘
         ↓
-🔊 Response via TTS
+📤 "Dispatch to Xander"
+        ↓
+┌──────────────────────────────────────┐
+│   XANDER (Workstation)               │
+│   • Receives work package            │
+│   • Creates detailed plan            │
+│   • Queues tasks                     │
+│   • Executes asynchronously          │
+└──────────────────────────────────────┘
         ↓
 "Goodbye"
         ↓
-🎵 Spotify/media RESUMES
+🎵 Music RESUMES (Xander keeps working)
 ```
-
----
-
-## App State Machine
-
-| State | Description | Transitions To |
-|-------|-------------|----------------|
-| LISTENING | Mic active, waiting for speech | PROCESSING, EXITING |
-| PROCESSING | Hermes processing (may call Xander) | SPEAKING |
-| SPEAKING | TTS playing response | LISTENING |
-| EXITING | Releasing audio focus, closing app | (app closes) |
 
 ---
 
 ## Core Components
 
 ### Voice App (React Native)
-1. **App.tsx** - State machine, orchestrates flow
+1. **App.tsx** - State machine, voice flow
 2. **useVoice.ts** - STT hook
 3. **useSpeech.ts** - TTS hook
-4. **hermesApi.ts** - HTTP client for local Hermes
+4. **hermesApi.ts** - HTTP client for Hermes
 5. **audioFocus.ts** - Audio focus management
 
 ### Hermes (Phone Agent - Termux)
-1. **Simple task handler** - Quick local responses
-2. **Xander client** - MCP connection to workstation
-3. **Router** - Decides local vs remote handling
-4. **Context manager** - Maintains conversation state
+1. **Conversation engine** - Maintains session context
+2. **Light research** - Quick web lookups
+3. **Plan shaper** - Helps structure ideas
+4. **Dispatcher** - Sends work to Xander
+5. **Session tracker** - What's been discussed/dispatched
 
-### Xander (Workstation Agent)
-1. **MCP server** - Exposes tools and capabilities
-2. **Web research tools** - Browser, search, scraping
-3. **Heavy computation** - Analysis, processing
-4. **Full toolchain** - GitHub, databases, APIs
+### Xander (Workstation)
+1. **MCP endpoint** - Receives dispatched work
+2. **Planner** - Creates detailed plans
+3. **Task queue** - Queues work for execution
+4. **Executor** - Runs tasks asynchronously
+5. **Reporter** - Notifies when complete
 
 ---
 
@@ -177,8 +213,6 @@ hermes start
 
 ### Workstation (Xander)
 ```bash
-# Xander exposes MCP endpoint
-# Hermes connects to it for complex tasks
 xander serve --mcp --port 8080
 ```
 
@@ -202,16 +236,17 @@ npx expo run:android
 
 | Phase | Tasks | Est. Time |
 |-------|-------|-----------|
-| **1. Project Setup** | Initialize Expo in `mobile/`, install dependencies | 30 min |
-| **2. Voice Hooks** | Implement STT/TTS hooks with error handling | 1.5 hours |
-| **3. Hermes Integration** | API client, session management | 30 min |
-| **4. State Machine** | App flow, state transitions, loop logic | 1.5 hours |
+| **1. Project Setup** | Initialize Expo in `mobile/`, dependencies | 30 min |
+| **2. Voice Hooks** | STT/TTS with error handling | 1.5 hours |
+| **3. Hermes API** | HTTP client, session management | 30 min |
+| **4. State Machine** | Voice app flow | 1.5 hours |
 | **5. Audio Focus** | Native module for AudioManager | 1.5 hours |
-| **6. Hermes Router** | Task routing logic (local vs Xander) | 1 hour |
-| **7. Xander MCP Client** | Connect Hermes to Xander via MCP | 1.5 hours |
-| **8. Testing** | End-to-end with full stack | 1.5 hours |
-| **9. Google Routine** | Configure Assistant trigger | 15 min |
-| **Total** | | **~10 hours** |
+| **6. Conversation Engine** | Hermes session orchestration | 2 hours |
+| **7. Light Research** | Quick lookup capability for Hermes | 1 hour |
+| **8. Dispatcher** | Hermes → Xander dispatch via MCP | 1.5 hours |
+| **9. Xander Queue** | Task queue and execution | 2 hours |
+| **10. Testing** | End-to-end conversation → dispatch | 1.5 hours |
+| **Total** | | **~14 hours** |
 
 ---
 
@@ -221,48 +256,20 @@ npx expo run:android
 ┌─────────────────────────────────────┐
 │                                     │
 │         ┌───────────┐               │
-│         │    🎤     │               │  ← Icon: 🎤 ⏳ 🔊
+│         │    🎤     │               │  ← Listening
 │         └───────────┘               │
 │                                     │
-│      "Listening..."                 │  ← Status
-│                                     │
-│  "Research best practices for..."   │  ← Last transcript
+│  "Planning notification feature..." │  ← Context
 │                                     │
 │  ┌─────────────────────────────┐    │
-│  │ 🏠 Hermes │ 🌐 Xander       │    │  ← Shows which agent
+│  │ Session: 3 exchanges        │    │  ← Session info
+│  │ Dispatched: 1 task          │    │
 │  └─────────────────────────────┘    │
 │                                     │
-│         [ Goodbye ]                 │  ← Exit button
+│  [Dispatch to Xander] [Goodbye]     │
 │                                     │
 └─────────────────────────────────────┘
 ```
-
----
-
-## Key Dependencies
-
-```json
-{
-  "dependencies": {
-    "expo": "~52.0.0",
-    "expo-speech": "~13.0.0",
-    "@react-native-voice/voice": "^3.2.4",
-    "react-native": "0.76.x"
-  }
-}
-```
-
----
-
-## Future Enhancements
-
-1. **Android Auto Support** - Car screen integration
-2. **Wake Word** - "Hey Hermes" without Google trigger
-3. **Quick Command Mode** - Duck audio instead of pause
-4. **Visual Feedback** - Waveform during listening
-5. **Offline STT** - Local speech recognition
-6. **Smart Caching** - Hermes caches Xander responses
-7. **Fallback Mode** - Hermes works standalone when Xander unavailable
 
 ---
 
@@ -270,9 +277,10 @@ npx expo run:android
 
 - [ ] App opens via "Hey Google, talk to Hermes"
 - [ ] Music pauses when app opens
-- [ ] STT captures user speech accurately
-- [ ] Hermes responds via TTS for simple tasks
-- [ ] Complex tasks route to Xander successfully
-- [ ] Conversation loop works for multiple turns
-- [ ] "Goodbye" exits and resumes music
+- [ ] Conversational session works naturally
+- [ ] Hermes does light research during conversation
+- [ ] Plans are shaped collaboratively
+- [ ] Work dispatches to Xander successfully
+- [ ] Xander queues and executes tasks
+- [ ] "Goodbye" exits cleanly, Xander keeps working
 - [ ] 30-second timeout auto-exits
