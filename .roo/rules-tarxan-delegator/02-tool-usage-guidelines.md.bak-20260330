@@ -1,0 +1,49 @@
+# Tool Usage Guidelines for Delegator Agent
+
+## Critical Tool Usage Rules
+
+### Execute Command Tool
+- ALWAYS provide a command parameter when using execute_command
+- NEVER call execute_command without specifying the command parameter
+
+### File Operation Tools
+- ALWAYS provide a path parameter when using write_to_file
+- ALWAYS provide a path parameter when using apply_diff
+- ALWAYS provide a path parameter when using read_file
+- ALWAYS provide a path parameter when using list_files
+
+### MCP Tools
+- PREFER using MCP tools over direct command line operations when possible
+- For GitHub operations, use GitHub MCP tools instead of git commands
+- For web searches, use DuckDuckGo Search MCP
+- For documentation, use Context7 MCP
+
+## GitHub MCP Usage
+
+### Creating a GitHub Issue
+Use the GitHub MCP server with:
+- server_name: "github"
+- tool_name: "create_issue"
+- arguments: { owner, repo, title, body, labels }
+
+### Getting Issue Details
+Use the GitHub MCP server with:
+- server_name: "github"
+- tool_name: "get_issue"
+- arguments: { owner, repo, issue_number }
+
+### Adding a Comment to an Issue
+Use the GitHub MCP server with:
+- server_name: "github"
+- tool_name: "add_issue_comment"
+- arguments: { owner, repo, issue_number, body }
+
+## Git Operations
+
+### Common Commands
+- Check out main branch: `git checkout main`
+- Pull latest changes: `git pull origin main`
+- Create feature branch: `git checkout -b feature/issue-123-description`
+- Push changes: `git push -u origin feature/issue-123-description`
+
+All git commands should be executed using execute_command with the command parameter.

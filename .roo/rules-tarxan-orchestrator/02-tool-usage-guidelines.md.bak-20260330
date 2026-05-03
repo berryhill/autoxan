@@ -1,0 +1,36 @@
+# Tool Usage Guidelines for Orchestrator
+
+## Critical Tool Usage Rules
+
+### Execute Command Tool
+- ALWAYS provide a command parameter when using execute_command
+- NEVER call execute_command without specifying the command parameter
+
+### MCP Tools
+- PREFER using MCP tools over direct command line operations when possible
+- For GitHub operations, use GitHub MCP tools instead of git commands
+- For web searches, use DuckDuckGo Search MCP
+- For documentation, use Context7 MCP
+
+## Git Operations
+
+### Common Commands
+- Check out main branch: `git checkout main`
+- Pull latest changes: `git pull origin main`
+- Create feature branch: `git checkout -b feature/issue-123-description`
+- Push changes: `git push -u origin feature/issue-123-description`
+
+All git commands should be executed using execute_command with the command parameter.
+
+## Delegation
+
+### Delegating to Implementation Agent
+Use the new_task tool with:
+- mode: "tarxan-implementation-agent"
+- message: The task description including requirements and resources
+
+When delegating, include:
+1. Clear requirements from the issue
+2. Relevant documentation context
+3. Instructions to follow the git workflow
+4. Instructions to commit changes when complete

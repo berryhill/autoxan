@@ -1,0 +1,8 @@
+# Roo/MCP
+.roo/mcp.json
+
+# Agent local settings
+.claude/settings.local.json
+app/.claude/settings.local.json
+.codex/
+
