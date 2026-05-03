@@ -10,10 +10,9 @@ A React Native app that provides voice interaction with a Hermes agent running l
 
 ```
 autoxan/
-├── mobile/                    # React Native mobile app
-│   └── hermes-voice-app/
+├── mobile/                    # Hermes Voice App (React Native)
 ├── plans/                     # Project plans and documentation
-└── (future codebases...)
+└── (other codebases...)       # Future projects in separate directories
 ```
 
 ---
@@ -146,8 +145,7 @@ hermes start
 ### React Native App
 ```bash
 cd mobile
-npx create-expo-app hermes-voice-app
-cd hermes-voice-app
+npx create-expo-app .
 npx expo install expo-speech
 npm install @react-native-voice/voice
 npx expo run:android
@@ -164,7 +162,7 @@ npx expo run:android
 
 | Phase | Tasks | Est. Time |
 |-------|-------|-----------|
-| **1. Project Setup** | Create Expo project in `mobile/`, install dependencies | 30 min |
+| **1. Project Setup** | Initialize Expo in `mobile/`, install dependencies | 30 min |
 | **2. Voice Hooks** | Implement STT/TTS hooks with error handling | 1.5 hours |
 | **3. Hermes Integration** | API client, session management | 30 min |
 | **4. State Machine** | App flow, state transitions, loop logic | 1.5 hours |
