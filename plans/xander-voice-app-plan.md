@@ -367,6 +367,7 @@ autoxan/
 3. **useSpeech.ts** - TTS hook
 4. **xanderApi.ts** - HTTP client for Xander
 5. **audioFocus.ts** - Audio focus management
+6. **GestureControls.tsx** - Interrupt/Steer/Queue/Stop/Repeat buttons
 
 ### Xander (Phone Agent - Termux)
 1. **Conversation engine** - Maintains session context
@@ -433,6 +434,32 @@ npx expo run:android
 
 ---
 
+## Gesture Controls (Future)
+
+Placeholder buttons for gesture-based conversation control. These will make voice interaction more controllable, especially while driving.
+
+| Gesture | Button | Intent | Future Implementation |
+|---------|--------|--------|----------------------|
+| **Interrupt** | ✋ | Cut off Xander mid-sentence | Tap to stop TTS, signal "I want to talk now" |
+| **Steer** | 🔀 | Redirect the conversation | "That's not what I meant" / change topic |
+| **Queue** | 📋 | Add to task queue without dispatch | Save for later, don't send to silas yet |
+| **Stop** | ⏹️ | End session immediately | Quick exit, music resumes |
+| **Repeat** | 🔁 | Replay last response | "Say that again" |
+
+### Why Gestures?
+
+Voice alone can be frustrating:
+- Can't easily interrupt a long response
+- Hard to say "wait, go back" naturally
+- No quick "save that" without speaking
+
+**Buttons as gesture placeholders** let us:
+1. Test the UX with simple taps first
+2. Later replace with swipe/tap gestures
+3. Eventually support steering wheel controls or watch taps
+
+---
+
 ## Minimal UI
 
 ```
@@ -447,6 +474,11 @@ npx expo run:android
 │  ┌─────────────────────────────┐    │
 │  │ Session: 3 exchanges        │    │  ← Session info
 │  │ Dispatched: 1 task          │    │
+│  └─────────────────────────────┘    │
+│                                     │
+│  ┌─────────────────────────────┐    │
+│  │  ✋    🔀    📋    ⏹️    🔁   │    │  ← Gesture controls
+│  │ Int  Steer Queue Stop  Rep  │    │
 │  └─────────────────────────────┘    │
 │                                     │
 │  [Dispatch to Silas] [Goodbye]      │
@@ -475,8 +507,17 @@ npx expo run:android
 - [ ] silas queues and executes tasks
 - [ ] silas keeps working after session ends
 
+### Gesture Controls (Placeholder Buttons)
+
+- [ ] Interrupt button stops TTS immediately
+- [ ] Steer button signals redirection intent
+- [ ] Queue button saves without dispatching
+- [ ] Stop button ends session cleanly
+- [ ] Repeat button replays last response
+
 ### Quality Indicators
 
 - [ ] Most sessions are useful without dispatching
 - [ ] User feels heard, not processed
 - [ ] Xander helps think, doesn't just execute
+- [ ] Gesture controls make conversation feel controllable
