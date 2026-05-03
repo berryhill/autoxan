@@ -2,7 +2,19 @@
 
 ## Project Overview
 
-A React Native app that provides voice interaction with a Hermes (OpenClaw) agent running locally in Termux. Triggered by "Hey Google, talk to Hermes" via Google Assistant Routine. Music pauses during the conversation session and resumes when you exit.
+A React Native app that provides voice interaction with a Hermes agent running locally in Termux. Triggered by "Hey Google, talk to Hermes" via Google Assistant Routine. Music pauses during the conversation session and resumes when you exit.
+
+---
+
+## Repository Structure
+
+```
+autoxan/
+├── mobile/                    # React Native mobile app
+│   └── hermes-voice-app/
+├── plans/                     # Project plans and documentation
+└── (future codebases...)
+```
 
 ---
 
@@ -24,7 +36,7 @@ A React Native app that provides voice interaction with a Hermes (OpenClaw) agen
 │                                            │ HTTP                │
 │                                            ▼                     │
 │                           ┌──────────────────────────────────┐  │
-│                           │ Hermes (OpenClaw) in Termux      │  │
+│                           │ Hermes Agent in Termux           │  │
 │                           │ http://localhost:3000/api/chat   │  │
 │                           └──────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
@@ -41,7 +53,7 @@ A React Native app that provides voice interaction with a Hermes (OpenClaw) agen
 | Text-to-Speech | `expo-speech` |
 | HTTP Client | `fetch` |
 | Audio Focus | Native module (AudioManager) |
-| Backend | Hermes/OpenClaw in Termux (`localhost:3000`) |
+| Backend | Hermes in Termux (`localhost:3000`) |
 
 ---
 
@@ -126,13 +138,14 @@ A React Native app that provides voice interaction with a Hermes (OpenClaw) agen
 ### Termux (Backend)
 ```bash
 pkg install nodejs
-npm install -g openclaw
-openclaw start
+npm install -g hermes
+hermes start
 # Running at http://localhost:3000
 ```
 
 ### React Native App
 ```bash
+cd mobile
 npx create-expo-app hermes-voice-app
 cd hermes-voice-app
 npx expo install expo-speech
@@ -151,7 +164,7 @@ npx expo run:android
 
 | Phase | Tasks | Est. Time |
 |-------|-------|-----------|
-| **1. Project Setup** | Create Expo project, install dependencies | 30 min |
+| **1. Project Setup** | Create Expo project in `mobile/`, install dependencies | 30 min |
 | **2. Voice Hooks** | Implement STT/TTS hooks with error handling | 1.5 hours |
 | **3. Hermes Integration** | API client, session management | 30 min |
 | **4. State Machine** | App flow, state transitions, loop logic | 1.5 hours |
