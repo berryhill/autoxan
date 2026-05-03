@@ -2,7 +2,9 @@
 
 ## Project Overview
 
-A React Native app for conversational planning with **Hermes** (phone agent). Hermes orchestrates meaningful sessions - you discuss ideas, do light research together, and shape plans. When ready, Hermes dispatches the real work to **Xander** (workstation) which plans in detail and queues execution. Like having a smart assistant to brainstorm with in the car.
+A React Native app for natural voice conversations with **Hermes** (phone agent). The primary focus is **great conversational experience** - like talking to a smart friend while driving. Hermes listens, thinks with you, does quick research, and helps you work through ideas organically.
+
+**Dispatch is optional.** Not every conversation needs action. Many are just exploring, thinking out loud, or staying connected. When something does crystallize into real work, Hermes can stamp a robust plan to **Xander** (workstation) for execution.
 
 ---
 
@@ -100,17 +102,41 @@ autoxan/
 
 ## Example Sessions
 
-### Example 1: Planning a Feature (from above)
-**Organic:** Brainstorm what the feature should do
-**Rigid:** Xander creates implementation plan, writes tickets, queues PRs
-
----
-
-### Example 2: Research & Decision Making
+### Example 1: Just Thinking Out Loud (No Dispatch)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    ORGANIC CONVERSATION (Hermes)                 │
+│                    PURE CONVERSATION                             │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  You: "I've been thinking about that meeting tomorrow"          │
+│  Hermes: "The one with the investors?"                          │
+│                                                                  │
+│  You: "Yeah, I'm not sure how to position the roadmap"          │
+│  Hermes: "What's your concern - timeline or priorities?"        │
+│                                                                  │
+│  You: "Both I guess. We promised features we might not hit"     │
+│  Hermes: "That's a common spot. You could frame it as           │
+│           learning-driven pivots rather than missed targets.    │
+│           What did you learn that changed direction?"           │
+│                                                                  │
+│  You: "Good point. User feedback showed they wanted X not Y"    │
+│  Hermes: "There you go - that's a positive story. You listened" │
+│                                                                  │
+│  You: "Thanks, that helps. Goodbye"                             │
+│  Hermes: "Good luck tomorrow. You've got this."                 │
+│                                                                  │
+│  [No dispatch - just a good conversation]                       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Example 2: Exploring an Idea (Research, No Decision Yet)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    EXPLORATORY CONVERSATION                      │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  You: "I'm thinking about switching our database"               │
@@ -122,96 +148,110 @@ autoxan/
 │  Hermes: "PlanetScale and Neon both have generous free tiers.   │
 │           CockroachDB has good scaling. What's your priority?"  │
 │                                                                  │
-│  You: "We need something that works with Prisma"                │
-│  Hermes: "All three work with Prisma. Want me to have Xander    │
-│           do a deep comparison with migration complexity?"      │
+│  You: "Hmm, I need to think about this more"                    │
+│  Hermes: "Makes sense. It's a big decision. Want me to          │
+│           remember these options for next time?"                │
 │                                                                  │
-│  You: "Yeah, include cost projections for our usage"            │
+│  You: "Yeah, save that. I'll revisit it this week"              │
+│  Hermes: "Noted. Talk to you later."                            │
 │                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓ Dispatch
-┌─────────────────────────────────────────────────────────────────┐
-│                    RIGID WORK (Xander)                          │
-├─────────────────────────────────────────────────────────────────┤
-│  • Deep research: pricing tiers, feature comparison             │
-│  • Analyze current usage patterns                               │
-│  • Calculate cost projections (30/60/90 day)                    │
-│  • Evaluate migration complexity with Prisma                    │
-│  • Create comparison document                                   │
-│  • Queue: recommendation report                                 │
+│  [No dispatch yet - just exploration, saved for later]          │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### Example 3: Quick Errand While Driving
+### Example 3: Quick Help While Driving (No Dispatch)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    ORGANIC CONVERSATION (Hermes)                 │
+│                    QUICK CONVERSATION                            │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  You: "I need to send a gift to mom for her birthday"           │
-│  Hermes: "When's her birthday?"                                 │
+│  You: "What's a good gift for mom? Her birthday is Tuesday"     │
+│  Hermes: "What does she like?"                                  │
 │                                                                  │
-│  You: "Next Tuesday"                                            │
-│  Hermes: "What kind of gift? I can look up options"             │
+│  You: "Cozy stuff - candles, blankets"                          │
+│  Hermes: "Let me look... Found some nice options at Anthropic   │
+│           Home around $50-75. There's a lavender candle set     │
+│           or a weighted blanket that's popular."                │
 │                                                                  │
-│  You: "Something cozy, she likes candles and blankets"          │
-│  Hermes: "Found some nice gift sets... price range?"            │
+│  You: "Oh the candle set sounds good. I'll order that later"    │
+│  Hermes: "Nice choice. Want me to save that link for you?"      │
 │                                                                  │
-│  You: "Around $50-75"                                           │
-│  Hermes: "Got a few good options. Want Xander to order          │
-│           the best one and handle shipping?"                    │
+│  You: "Yeah, save it. Thanks!"                                  │
+│  Hermes: "Saved. Have a good drive."                            │
 │                                                                  │
-│  You: "Yes, use my default payment and ship to her address"     │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓ Dispatch
-┌─────────────────────────────────────────────────────────────────┐
-│                    RIGID WORK (Xander)                          │
-├─────────────────────────────────────────────────────────────────┤
-│  • Select best gift option within criteria                      │
-│  • Look up mom's shipping address                               │
-│  • Process order with saved payment                             │
-│  • Confirm delivery by Tuesday                                  │
-│  • Queue: order confirmation notification                       │
+│  [No dispatch - you'll handle it yourself later]                │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### Example 4: Debugging a Problem
+### Example 4: Talking Through a Problem (No Dispatch)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    ORGANIC CONVERSATION (Hermes)                 │
+│                    TROUBLESHOOTING CONVERSATION                  │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  You: "The API is slow today, users are complaining"            │
-│  Hermes: "Let me check... which endpoints?"                     │
+│  Hermes: "That's frustrating. Any recent changes?"              │
 │                                                                  │
-│  You: "The main dashboard endpoint"                             │
-│  Hermes: "I see some recent commits to that area. Also          │
-│           looks like there's a new database index missing.      │
-│           Want me to have Xander investigate deeper?"           │
+│  You: "We deployed yesterday"                                   │
+│  Hermes: "Let me check... looks like there were 3 commits.      │
+│           One touched the dashboard query. Could be that."      │
 │                                                                  │
-│  You: "Yes, and fix it if it's straightforward"                 │
-│  Hermes: "On it. Should he create a PR or commit directly?"     │
+│  You: "Can you see what changed?"                               │
+│  Hermes: "It added a new join without an index. Classic N+1.    │
+│           Probably needs a compound index on user_id + date."   │
 │                                                                  │
-│  You: "PR, I want to review it first"                           │
+│  You: "Okay I know what to do. I'll fix it when I get in"       │
+│  Hermes: "Sounds good. Want me to remind you?"                  │
+│                                                                  │
+│  You: "No I've got it. Goodbye"                                 │
+│  Hermes: "Good luck with the fix."                              │
+│                                                                  │
+│  [No dispatch - you're handling it yourself]                    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Example 5: When Dispatch DOES Make Sense
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    CONVERSATION → DISPATCH                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  You: "I want to add push notifications to the app"             │
+│  Hermes: "What's the main use case?"                            │
+│                                                                  │
+│  You: "Reminding users when tasks are due"                      │
+│  Hermes: "Makes sense. You'd need a notification service,       │
+│           scheduling, user preferences... It's a decent chunk   │
+│           of work. Want me to think through the details?"       │
+│                                                                  │
+│  You: "Yeah, what would it involve?"                            │
+│  Hermes: "Probably Firebase or OneSignal for delivery,          │
+│           a scheduler for timing, preferences in the DB,        │
+│           and UI for users to configure. Maybe 3-4 days work."  │
+│                                                                  │
+│  You: "That sounds right. I want Xander to build a full plan"   │
+│  Hermes: "Got it. I'll stamp this to Xander - he'll create      │
+│           a detailed implementation plan with tasks."           │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
                               ↓ Dispatch
 ┌─────────────────────────────────────────────────────────────────┐
 │                    RIGID WORK (Xander)                          │
 ├─────────────────────────────────────────────────────────────────┤
-│  • Profile the slow endpoint                                    │
-│  • Identify missing indexes or N+1 queries                      │
-│  • Create migration for index if needed                         │
-│  • Test fix locally                                             │
-│  • Create PR with before/after benchmarks                       │
-│  • Queue: PR ready for review notification                      │
+│  • Research notification providers (compare options)            │
+│  • Design database schema for preferences                       │
+│  • Create detailed implementation plan                          │
+│  • Break into tasks with estimates                              │
+│  • Queue: Plan ready for review                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -219,23 +259,29 @@ autoxan/
 
 ## Agent Responsibilities
 
-| Agent | Role | Capabilities |
-|-------|------|--------------|
-| **Hermes (Phone)** | Session Orchestrator | Conversational planning, light research, dispatch |
-| **Xander (Workstation)** | Execution Engine | Detailed planning, task queuing, heavy lifting |
+| Agent | Role | Primary Focus |
+|-------|------|---------------|
+| **Hermes (Phone)** | Conversational Companion | Natural, helpful conversation first |
+| **Xander (Workstation)** | Execution Engine | Rigid work when dispatched |
 
-### Hermes Does
+### Hermes: Conversation First
 
-- Meaningful conversation and brainstorming
-- Light research (quick lookups to inform discussion)
-- Shapes ideas collaboratively with you
-- Summarizes and confirms understanding
-- Dispatches work packages to Xander
-- Tracks what's been dispatched
+**Primary job: Be great to talk to.**
 
-### Xander Does
+- Natural, flowing conversation
+- Listens and asks good questions
+- Thinks with you, not for you
+- Does light research when helpful
+- Remembers context within session
+- Suggests dispatch only when work crystallizes
 
-- Receives dispatched work from Hermes
+**Dispatch is secondary.** Most conversations don't dispatch. Hermes is useful even if you never send anything to Xander - like having a smart friend to think out loud with.
+
+### Xander: Execution When Needed
+
+**Only activates when Hermes dispatches work.**
+
+- Receives work packages from Hermes
 - Creates detailed implementation plans
 - Queues tasks for execution
 - Heavy research and analysis
@@ -269,20 +315,27 @@ autoxan/
 🎤 Conversational session begins
         ↓
 ┌──────────────────────────────────────┐
-│   PLANNING CONVERSATION              │
+│   NATURAL CONVERSATION               │
 │                                      │
 │   You ←→ Hermes                      │
-│   • Discuss ideas                    │
+│   • Talk through ideas               │
 │   • Hermes does light research       │
-│   • Shape the plan together          │
-│   • Refine until ready               │
+│   • Think out loud together          │
+│   • No pressure, just conversation   │
 └──────────────────────────────────────┘
         ↓
-📤 "Dispatch to Xander"
-        ↓
 ┌──────────────────────────────────────┐
-│   XANDER (Workstation)               │
-│   • Receives work package            │
+│   MOST SESSIONS END HERE             │
+│   "Goodbye" → Music resumes          │
+└──────────────────────────────────────┘
+
+        OR (when there's real work)
+                    ↓
+┌──────────────────────────────────────┐
+│   DISPATCH TO XANDER (optional)      │
+│   "Have Xander build a plan for X"   │
+│                                      │
+│   Xander receives the work:          │
 │   • Creates detailed plan            │
 │   • Queues tasks                     │
 │   • Executes asynchronously          │
@@ -394,12 +447,25 @@ npx expo run:android
 
 ## Success Criteria
 
+### Core (Conversational Quality)
+
 - [ ] App opens via "Hey Google, talk to Hermes"
 - [ ] Music pauses when app opens
-- [ ] Conversational session works naturally
-- [ ] Hermes does light research during conversation
-- [ ] Plans are shaped collaboratively
-- [ ] Work dispatches to Xander successfully
-- [ ] Xander queues and executes tasks
-- [ ] "Goodbye" exits cleanly, Xander keeps working
+- [ ] **Conversation feels natural and helpful** ← Primary goal
+- [ ] Hermes asks good follow-up questions
+- [ ] Hermes remembers context within session
+- [ ] Light research enhances (doesn't interrupt) conversation
+- [ ] "Goodbye" exits cleanly, music resumes
 - [ ] 30-second timeout auto-exits
+
+### Secondary (Dispatch When Needed)
+
+- [ ] Dispatch to Xander works when requested
+- [ ] Xander queues and executes tasks
+- [ ] Xander keeps working after session ends
+
+### Quality Indicators
+
+- [ ] Most sessions are useful without dispatching
+- [ ] User feels heard, not processed
+- [ ] Hermes helps think, doesn't just execute
