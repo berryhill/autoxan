@@ -1,0 +1,78 @@
+# Xander - Hermes Agent Configuration
+# Copy this to ~/.hermes/config.yaml on your Android device (Termux)
+# Copy SOUL.md to ~/.hermes/SOUL.md for the personality
+
+# Model Configuration
+# Using OpenRouter for flexibility with multiple providers
+model: anthropic/claude-sonnet-4-20250514
+
+# Response settings optimized for voice/TTS
+# Keep responses short and natural for spoken output
+tool_output:
+  max_bytes: 8192      # Limit tool output to keep responses focused
+  max_lines: 100       # Limit lines for readability
+
+# Memory Configuration
+# Enable persistent memory for user preferences and context
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+  memory_char_limit: 2200    # ~800 tokens for memory
+  user_char_limit: 1375      # ~500 tokens for user profile
+
+# Terminal Configuration
+# Local backend for Termux on Android
+terminal:
+  backend: local
+  timeout: 60
+
+# Context Compression
+# Keep conversations manageable for voice interactions
+compression:
+  enabled: true
+  threshold: 0.50       # Compress at 50% of context limit
+  target_ratio: 0.20    # Keep 20% of threshold as recent tail
+  protect_last_n: 10    # Protect last 10 messages (important for voice flow)
+
+# Agent Settings
+agent:
+  max_turns: 30         # Lower for voice conversations (faster resolution)
+  
+  # Custom personality preset for Xander voice mode
+  personalities:
+    voice:
+      You are in voice mode. Keep all responses under 3 sentences.
+      Be direct and conversational. The user is likely driving.
+      Only elaborate if explicitly asked.
+
+# MCP Servers Configuration
+# For dispatch to Silas workstation agent
+mcp_servers:
+  # Silas dispatch server (configure when Silas MCP is available)
+  # silas:
+  #   url: "http://workstation-ip:3000"  # Replace with actual Silas endpoint
+  #   tools:
+  #     include: [dispatch_task, check_task_status, list_pending_tasks]
+  #     prompts: false
+  #     resources: false
+  
+  # Example: GitHub integration for light research
+  # github:
+  #   command: "npx"
+  #   args: ["-y", "@modelcontextprotocol/server-github"]
+  #   env:
+  #     GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_TOKEN}
+  #   tools:
+  #     include: [search_code, list_issues]
+  #     prompts: false
+  #     resources: false
+
+# File Read Safety
+# Smaller limit for voice context
+file_read_max_chars: 30000  # ~10K tokens, reasonable for voice sessions
+
+# Disabled toolsets for voice-optimized experience
+# Uncomment to disable tools that aren't useful during voice conversations
+# agent:
+#   disabled_toolsets:
+#     - browser  # Disable if not needed for voice interactions
