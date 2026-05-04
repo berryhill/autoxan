@@ -5,6 +5,13 @@
 
 export { XanderApi, xanderApi } from './xanderApi';
 export type {
+  // Core types
+  Message,
+  Session,
+  SendMessageResponse,
+  DispatchRequest,
+  DispatchResponse,
+  // Legacy types (for backward compatibility)
   XanderMessage,
   XanderSession,
   XanderResponse,
