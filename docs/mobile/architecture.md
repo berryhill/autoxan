@@ -36,7 +36,7 @@ The Xander Voice App is built with React Native (Expo) and follows a modular arc
 
 ```
 mobile/
-├── App.tsx                          # Main application entry
+├── App.tsx                          # Main application entry (conversation flow)
 ├── index.ts                         # Expo entry point
 ├── app.json                         # Expo configuration
 ├── package.json                     # Dependencies
@@ -68,7 +68,10 @@ mobile/
     │       └── useSpeech.test.ts    # TTS hook tests
     ├── store/                       # State management
     │   ├── index.ts                 # Barrel export
-    │   └── sessionStore.ts          # Zustand session store
+    │   ├── types.ts                 # Type definitions & state machine
+    │   ├── sessionStore.ts          # Zustand session store
+    │   └── __tests__/               # Store unit tests
+    │       └── sessionStore.test.ts # Session store tests (158 tests)
     └── utils/                       # Utility functions
         ├── index.ts                 # Barrel export
         └── audioFocus.ts            # Audio focus utilities
@@ -78,27 +81,73 @@ mobile/
 
 ### App.tsx - Main Entry Point
 
-The main application component that orchestrates the voice interface.
+The main application component that orchestrates the voice conversation flow with Xander.
 
 **Purpose:**
 - Renders the main UI layout
-- Manages app-level state (idle, listening, processing, speaking)
+- Implements the complete conversation loop (listen → process → speak → listen)
+- Manages 30-second inactivity timeout
+- Handles goodbye keyword detection
 - Coordinates voice button interactions
 - Displays conversation context and session info
+- Error handling and recovery
 
-**State Machine:**
+**State Machine (Phase 4):**
 ```
-idle → listening → processing → speaking → idle
-         ↓                         ↓
-       (tap)                    (timeout)
-         ↓                         ↓
-       idle                      idle
+┌─────────────────────────────────────────────────────────────┐
+│                     STATE MACHINE                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  IDLE ──────▶ CONNECTING ──────▶ LISTENING                  │
+│    ▲              │                  │                       │
+│    │              ▼                  ▼                       │
+│    │          ERROR              PROCESSING                  │
+│    │              │                  │                       │
+│    │              ▼                  ▼                       │
+│    └────────── ENDED ◀────────── SPEAKING                   │
+│                                      │                       │
+│                                      └──▶ LISTENING (loop)  │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+**Conversation Flow:**
+1. **idle** → User taps button → **connecting**
+2. **connecting** → Health check + session start → **listening**
+3. **listening** → Voice recognition active → User speaks → **processing**
+4. **processing** → Send to Xander → Receive response → **speaking**
+5. **speaking** → TTS plays response → **listening** (loop continues)
+6. **listening/processing/speaking** → Goodbye keyword or timeout → **ended**
 
 **Key Functions:**
-- `handleVoiceButtonPress()` - Start/stop listening
-- `handleGoodbye()` - End conversation session
-- `getVoiceButtonState()` - Map app state to button state
+| Function | Description |
+|----------|-------------|
+| `handleVoiceButtonPress()` | Start/stop listening, handle button interaction |
+| `handleGoodbye()` | End conversation session gracefully with farewell |
+| `handleInactivityTimeout()` | Handle 30-second inactivity, auto-end session |
+| `processTranscript(text)` | Process user speech, check goodbye keywords, send to Xander |
+| `startVoiceListening()` | Initialize speech recognition |
+| `getVoiceButtonState()` | Map session state to VoiceButton state |
+| `getStatusText()` | Get user-facing status text |
+
+**Effects:**
+| Effect | Trigger | Action |
+|--------|---------|--------|
+| State Change Handler | `sessionState` changes | Handle connecting, listening, ended states |
+| Partial Transcript | `partialTranscript` updates | Update currentTranscript display |
+| Final Transcript | `transcript` finalized | Process speech, send to Xander |
+| Voice Error | `voiceError` occurs | Set error state |
+| Cleanup | Component unmount | Clear inactivity timer |
+
+**Inactivity Timeout:**
+- Checks every 5 seconds if user has been inactive
+- After 30 seconds of inactivity, automatically says goodbye
+- Uses `SESSION_TIMEOUT.INACTIVITY_MS` constant (30,000ms)
+
+**Goodbye Detection:**
+- Checks user transcript for goodbye keywords
+- Keywords: 'goodbye', 'bye', 'see you', 'talk to you later', 'end session', 'stop', 'quit', 'exit'
+- Uses `containsGoodbye()` utility function
 
 ---
 
@@ -595,65 +644,178 @@ const customApi = new XanderApi({
 
 ### State Management
 
-#### sessionStore (`src/store/sessionStore.ts`)
+The state management module implements a state machine for the voice conversation flow with validated transitions and inactivity tracking.
 
-Zustand store for managing conversation session state.
+#### types.ts (`src/store/types.ts`)
+
+Type definitions and utilities for the state machine.
 
 **Purpose:**
-- Track session state machine
+- Define all conversation states
+- Define valid state transitions
+- Provide transition validation
+- Goodbye keyword detection
+- Session timeout constants
+
+**ConversationState Type:**
+```typescript
+type ConversationState =
+  | 'idle'       // App just opened, no active session
+  | 'connecting' // Connecting to Xander (health check, session start)
+  | 'listening'  // Actively listening for user speech
+  | 'processing' // Processing user speech, sending to Xander
+  | 'speaking'   // TTS playing Xander's response
+  | 'error'      // An error occurred
+  | 'ended';     // Session has ended (final state)
+```
+
+**Valid State Transitions:**
+
+| From State | Valid To States |
+|------------|-----------------|
+| `idle` | `connecting` |
+| `connecting` | `listening`, `error` |
+| `listening` | `processing`, `error`, `ended` |
+| `processing` | `speaking`, `error`, `ended` |
+| `speaking` | `listening`, `error`, `ended` |
+| `error` | `idle`, `connecting`, `ended` |
+| `ended` | `idle` |
+
+**Constants:**
+```typescript
+// Session timeout configuration
+const SESSION_TIMEOUT = {
+  INACTIVITY_MS: 30000,  // 30 seconds inactivity timeout
+  WARNING_MS: 25000,     // 25 seconds before warning
+};
+
+// Keywords that trigger session end
+const GOODBYE_KEYWORDS = [
+  'goodbye', 'bye', 'see you', 'talk to you later',
+  'end session', 'stop', 'quit', 'exit'
+];
+```
+
+**Utility Functions:**
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `isValidTransition` | `(from: ConversationState, to: ConversationState) => boolean` | Check if a state transition is valid |
+| `containsGoodbye` | `(text: string) => boolean` | Check if text contains a goodbye keyword |
+
+**Usage:**
+```typescript
+import {
+  ConversationState,
+  VALID_TRANSITIONS,
+  isValidTransition,
+  containsGoodbye,
+  SESSION_TIMEOUT,
+  GOODBYE_KEYWORDS,
+} from '@/store';
+
+// Validate transition
+if (isValidTransition('listening', 'processing')) {
+  // Valid transition
+}
+
+// Check for goodbye
+if (containsGoodbye('goodbye everyone')) {
+  // End session
+}
+```
+
+---
+
+#### sessionStore (`src/store/sessionStore.ts`)
+
+Zustand store for managing conversation session state with validated state transitions.
+
+**Purpose:**
+- Implement state machine with validated transitions
+- Track inactivity for 30-second timeout
 - Store conversation messages
-- Track dispatched work
+- Track dispatched work to Silas
 - Centralize state management
+- Error handling
 
 **State:**
 | Property | Type | Description |
 |----------|------|-------------|
 | `sessionId` | `string \| null` | Current session ID |
-| `sessionState` | `SessionState` | Current state |
+| `sessionState` | `ConversationState` | Current state machine state |
 | `sessionStartedAt` | `number \| null` | Session start timestamp |
+| `lastActivity` | `number` | Last activity timestamp (for inactivity tracking) |
 | `messages` | `Message[]` | Conversation history |
-| `currentTranscript` | `string` | In-progress transcript |
+| `currentTranscript` | `string` | In-progress transcript (partial recognition) |
 | `lastXanderResponse` | `string` | Last Xander message |
-| `dispatchedWork` | `DispatchedWork[]` | Dispatched items |
+| `dispatchedWork` | `DispatchedWork[]` | Dispatched items to Silas |
 | `error` | `string \| null` | Error message |
 
-**Session States:**
-```typescript
-type SessionState =
-  | 'idle'       // No active session
-  | 'starting'   // Initializing
-  | 'listening'  // Listening for speech
-  | 'processing' // Processing speech
-  | 'thinking'   // Waiting for Xander
-  | 'speaking'   // Xander speaking
-  | 'ending'     // Session ending
-  | 'error';     // Error state
-```
-
 **Actions:**
-| Action | Description |
-|--------|-------------|
-| `startSession()` | Initialize new session |
-| `endSession()` | End current session |
-| `setSessionState(state)` | Update session state |
-| `addMessage(role, content)` | Add message to history |
-| `setCurrentTranscript(text)` | Update in-progress transcript |
-| `addDispatchedWork(desc)` | Track dispatched work |
-| `setError(error)` | Set error state |
-| `reset()` | Reset to initial state |
+| Action | Signature | Description |
+|--------|-----------|-------------|
+| `startSession()` | `() => void` | Initialize new session (idle → connecting) |
+| `endSession()` | `() => void` | End current session (any → ended) |
+| `setSessionState(state)` | `(state: ConversationState) => void` | Update session state directly (**deprecated**, use `transitionTo`) |
+| `transitionTo(state)` | `(state: ConversationState) => boolean` | Transition to new state with validation, returns success |
+| `addMessage(role, content)` | `(role: 'user' \| 'assistant', content: string) => void` | Add message to history |
+| `setCurrentTranscript(text)` | `(text: string) => void` | Update in-progress transcript |
+| `setLastXanderResponse(response)` | `(response: string) => void` | Set last Xander response |
+| `addDispatchedWork(desc)` | `(desc: string) => void` | Track dispatched work |
+| `updateDispatchedWork(id, status)` | `(id: string, status: 'pending' \| 'completed' \| 'failed') => void` | Update dispatch status |
+| `setError(error)` | `(error: string \| null) => void` | Set error state |
+| `updateActivity()` | `() => void` | Update lastActivity timestamp |
+| `getTimeSinceLastActivity()` | `() => number` | Get milliseconds since last activity |
+| `isInactive()` | `() => boolean` | Check if session is inactive (>30s) |
+| `reset()` | `() => void` | Reset to initial state |
+
+**Inactivity Tracking:**
+
+All state-changing actions automatically update `lastActivity`:
+- `startSession()`
+- `endSession()`
+- `setSessionState()`
+- `transitionTo()`
+- `addMessage()`
+- `setCurrentTranscript()`
+- `setLastXanderResponse()`
+- `addDispatchedWork()`
+- `updateDispatchedWork()`
+- `setError()`
 
 **Usage:**
 ```tsx
-import { useSessionStore } from '@/store';
+import { useSessionStore, containsGoodbye, SESSION_TIMEOUT } from '@/store';
 
-// In component
-const { sessionState, startSession, addMessage } = useSessionStore();
+function ConversationManager() {
+  const {
+    sessionState,
+    transitionTo,
+    startSession,
+    addMessage,
+    updateActivity,
+    getTimeSinceLastActivity,
+    isInactive,
+  } = useSessionStore();
 
-// Start session
-startSession();
+  // Start session
+  startSession(); // idle → connecting
 
-// Add message
-addMessage('user', 'Hello Xander');
+  // Validated transition
+  const success = transitionTo('listening'); // connecting → listening
+  if (!success) {
+    console.warn('Invalid transition');
+  }
+
+  // Check inactivity
+  if (isInactive()) {
+    // User inactive for 30+ seconds
+    endSession();
+  }
+
+  // Add message
+  addMessage('user', 'Hello Xander');
+}
 ```
 
 ---
@@ -851,4 +1013,4 @@ export const useNewStore = create<NewStoreState>((set) => ({
 
 ---
 
-*Last updated: Phase 3 - Xander API Client Implementation (Full HTTP client with session management, dispatch, and error handling)*
+*Last updated: Phase 4 - State Machine - Voice App Flow Control (Complete conversation loop with state validation, inactivity timeout, goodbye detection)*
