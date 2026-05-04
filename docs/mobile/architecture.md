@@ -25,7 +25,8 @@ The Xander Voice App is built with React Native (Expo) and follows a modular arc
 │  │ xanderApi                   │  │ audioFocus              │    │
 │  │ • sendMessage()            │  │ • requestAudioFocus()   │    │
 │  │ • startSession()           │  │ • abandonAudioFocus()   │    │
-│  │ • dispatchToSilas()        │  │                         │    │
+│  │ • dispatch()               │  │                         │    │
+│  │ • healthCheck()            │  │                         │    │
 │  └─────────────────────────────┘  └─────────────────────────┘    │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
@@ -50,7 +51,9 @@ mobile/
 └── src/
     ├── api/                         # API clients
     │   ├── index.ts                 # Barrel export
-    │   └── xanderApi.ts             # Xander HTTP client
+    │   ├── xanderApi.ts             # Xander HTTP client
+    │   └── __tests__/               # API unit tests
+    │       └── xanderApi.test.ts    # XanderApi tests
     ├── components/                  # React components
     │   ├── index.ts                 # Barrel export
     │   └── ui/                      # UI components
@@ -371,13 +374,14 @@ function TextReader() {
 
 #### XanderApi (`src/api/xanderApi.ts`)
 
-HTTP client for communicating with the Xander agent.
+Full HTTP client for communicating with the Xander agent running in Termux on the phone.
 
 **Purpose:**
-- Send user messages to Xander
-- Receive responses
-- Manage sessions
-- Dispatch work to Silas
+- Send user messages to Xander and receive responses
+- Session management (start, end, retrieve sessions)
+- Dispatch functionality to silas-workstation
+- Health check for Xander availability
+- Handle connection errors gracefully with user-friendly messages
 
 **Configuration:**
 | Setting | Default | Description |
@@ -385,25 +389,76 @@ HTTP client for communicating with the Xander agent.
 | `baseUrl` | `http://localhost:3000` | Xander agent URL |
 | `timeout` | `30000` | Request timeout (ms) |
 
-**Methods:**
+**Constructor:**
+```typescript
+const api = new XanderApi({ baseUrl?: string, timeout?: number });
+```
+
+**Session Management Methods:**
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `sendMessage(message)` | `XanderResponse` | Send message, get response |
-| `startSession()` | `XanderSession` | Start new conversation |
-| `endSession()` | `void` | End current conversation |
-| `getSession()` | `XanderSession \| null` | Get current session |
-| `healthCheck()` | `boolean` | Check agent availability |
-| `dispatchToSilas(work)` | `boolean` | Dispatch work to Silas |
+| `startSession()` | `Promise<XanderSession>` | Creates a new conversation session. Falls back to local session if server unavailable |
+| `endSession()` | `Promise<void>` | Ends the current session (clears session ID even if server call fails) |
+| `getSession()` | `Promise<XanderSession \| null>` | Retrieves current session data. Returns minimal session if server unreachable |
+| `getSessionId()` | `string \| null` | Returns current session ID synchronously |
 
-**Types:**
+**Message Handling Methods:**
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `sendMessage(message)` | `Promise<XanderResponse>` | Sends message to Xander with auto-session creation. Validates message (rejects empty/whitespace). Returns response with optional dispatch suggestions |
+
+**Dispatch Methods:**
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `dispatch(request)` | `Promise<DispatchResponse>` | Full dispatch to silas-workstation with DispatchRequest |
+| `dispatchToSilas(description)` | `Promise<boolean>` | Legacy method for simple dispatch (deprecated - use dispatch() instead) |
+
+**Health & Configuration Methods:**
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `healthCheck()` | `Promise<boolean>` | Detects Xander availability via /health endpoint |
+| `getBaseUrl()` | `string` | Returns the current base URL |
+| `setBaseUrl(url)` | `void` | Updates the base URL (useful for testing or configuration changes) |
+
+**Core Types:**
 ```typescript
-interface XanderResponse {
-  message: string;
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+interface Session {
+  id: string;
+  messages: Message[];
+  createdAt: string;
+}
+
+interface SendMessageResponse {
   sessionId: string;
-  metadata?: {
-    dispatchedToSilas?: boolean;
-    researchPerformed?: boolean;
-  };
+  response: string;
+  suggestDispatch?: boolean;
+  dispatchSummary?: string;
+}
+
+interface DispatchRequest {
+  sessionId: string;
+  summary: string;
+  details: string;
+}
+
+interface DispatchResponse {
+  success: boolean;
+  taskId: string;
+  message: string;
+}
+```
+
+**Legacy Types (backward compatibility):**
+```typescript
+interface XanderMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
 }
 
 interface XanderSession {
@@ -412,15 +467,128 @@ interface XanderSession {
   createdAt: string;
   updatedAt: string;
 }
+
+interface XanderResponse {
+  message: string;
+  sessionId: string;
+  metadata?: {
+    dispatchedToSilas?: boolean;
+    researchPerformed?: boolean;
+    suggestDispatch?: boolean;
+    dispatchSummary?: string;
+    [key: string]: unknown;
+  };
+}
+
+interface XanderApiConfig {
+  baseUrl?: string;
+  timeout?: number;
+}
+
+interface XanderApiError {
+  code: string;
+  message: string;
+  details?: unknown;
+}
 ```
 
-**Status:** Placeholder - full implementation in Phase 3
+**Error Handling:**
 
-**Usage:**
+The API converts axios errors to user-friendly `XanderApiError` objects:
+
+| Error Code | Condition | Message |
+|------------|-----------|---------|
+| `CONNECTION_REFUSED` | Cannot connect to Xander | "Cannot connect to Xander. Make sure Xander is running in Termux." |
+| `TIMEOUT` | Request timed out | "Request to Xander timed out. Please try again." |
+| `NETWORK_ERROR` | Network unreachable | "Network error. Check your connection and make sure Xander is running." |
+| `BAD_REQUEST` | HTTP 400 | Server-provided message or "Invalid request. Please check your input." |
+| `UNAUTHORIZED` | HTTP 401 | "Authentication required." |
+| `NOT_FOUND` | HTTP 404 | "The requested resource was not found." |
+| `SERVER_ERROR` | HTTP 500 | "Xander encountered an internal error. Please try again." |
+| `SERVICE_UNAVAILABLE` | HTTP 503 | "Xander is temporarily unavailable. Please try again later." |
+| `INVALID_MESSAGE` | Empty message sent | "Message cannot be empty" |
+
+**Graceful Fallbacks:**
+- `startSession()`: Creates local session (`local-session-{timestamp}`) when server unavailable
+- `getSession()`: Returns minimal session object when server unreachable
+- `endSession()`: Clears local session ID even if server call fails
+
+**Status:** ✅ Complete
+
+**Usage Examples:**
+
+Basic conversation:
 ```tsx
 import { xanderApi } from '@/api';
 
+// Send a message (auto-creates session if needed)
 const response = await xanderApi.sendMessage("Hello Xander");
+console.log(response.message);
+
+// Check if dispatch was suggested
+if (response.metadata?.suggestDispatch) {
+  console.log('Dispatch suggestion:', response.metadata.dispatchSummary);
+}
+```
+
+Session management:
+```tsx
+import { xanderApi } from '@/api';
+
+// Start a session explicitly
+const session = await xanderApi.startSession();
+console.log('Session ID:', session.sessionId);
+
+// Get current session
+const currentSession = await xanderApi.getSession();
+
+// End session when done
+await xanderApi.endSession();
+```
+
+Dispatching work to Silas:
+```tsx
+import { xanderApi } from '@/api';
+
+// Full dispatch with details
+const result = await xanderApi.dispatch({
+  sessionId: xanderApi.getSessionId()!,
+  summary: 'Create a new React component',
+  details: 'Build a button component with hover states and accessibility support'
+});
+
+if (result.success) {
+  console.log('Task created:', result.taskId);
+}
+
+// Simple dispatch (legacy)
+const success = await xanderApi.dispatchToSilas('Create a new component');
+```
+
+Health check and configuration:
+```tsx
+import { xanderApi } from '@/api';
+
+// Check if Xander is available
+const isAvailable = await xanderApi.healthCheck();
+if (!isAvailable) {
+  console.log('Xander is not running');
+}
+
+// Update base URL for testing
+xanderApi.setBaseUrl('http://192.168.1.100:3000');
+console.log('Current URL:', xanderApi.getBaseUrl());
+```
+
+Custom instance:
+```tsx
+import XanderApi from '@/api';
+
+// Create custom instance with different config
+const customApi = new XanderApi({
+  baseUrl: 'http://custom-host:3000',
+  timeout: 60000 // 60 seconds
+});
 ```
 
 ---
@@ -683,4 +851,4 @@ export const useNewStore = create<NewStoreState>((set) => ({
 
 ---
 
-*Last updated: Phase 2 - Voice Hooks Implementation (STT/TTS)*
+*Last updated: Phase 3 - Xander API Client Implementation (Full HTTP client with session management, dispatch, and error handling)*
