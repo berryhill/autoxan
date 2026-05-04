@@ -6,6 +6,39 @@
 // Store event listeners for expo-speech-recognition
 const speechRecognitionListeners: Record<string, ((event: unknown) => void)[]> = {};
 
+// Mock axios module
+jest.mock('axios', () => {
+  const mockAxiosInstance = {
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    delete: jest.fn(),
+    patch: jest.fn(),
+    defaults: {
+      baseURL: 'http://localhost:3000',
+    },
+    interceptors: {
+      request: {
+        use: jest.fn((successFn, errorFn) => {
+          // Store interceptors for potential testing
+          return 0;
+        }),
+      },
+      response: {
+        use: jest.fn((successFn, errorFn) => {
+          return 0;
+        }),
+      },
+    },
+  };
+
+  return {
+    create: jest.fn(() => mockAxiosInstance),
+    isAxiosError: jest.fn((error) => error?.isAxiosError === true),
+    __mockInstance: mockAxiosInstance,
+  };
+});
+
 // Mock expo-speech module
 jest.mock('expo-speech', () => ({
   speak: jest.fn(),
