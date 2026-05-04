@@ -19,11 +19,17 @@ Autoxan is an agent-based system designed for natural voice conversations while 
 autoxan/
 ├── docs/                      # Documentation (you are here)
 │   ├── README.md              # This file - documentation overview
-│   └── mobile/                # Mobile app documentation
-│       ├── README.md          # Mobile app overview
-│       ├── setup.md           # Setup instructions
-│       └── architecture.md    # Architecture documentation
+│   ├── mobile/                # Mobile app documentation
+│   │   ├── README.md          # Mobile app overview
+│   │   ├── setup.md           # Setup instructions
+│   │   └── architecture.md    # Architecture documentation
+│   └── xander-engine/         # Conversation engine documentation
+│       ├── README.md          # Engine overview
+│       ├── setup.md           # Installation & Termux deployment
+│       ├── api-reference.md   # Complete API documentation
+│       └── architecture.md    # Technical architecture
 ├── mobile/                    # Xander Voice App (React Native/Expo)
+├── xander-engine/             # Xander Conversation Engine (Node.js)
 └── plans/                     # Project plans and specifications
     ├── xander-voice-app-plan.md    # Detailed project plan
     └── gesture-ring-plan.md        # Future gesture control plans
@@ -36,6 +42,13 @@ autoxan/
 - **[Mobile Overview](./mobile/README.md)** - Introduction to the Xander Voice App
 - **[Setup Guide](./mobile/setup.md)** - How to set up and run the mobile app
 - **[Architecture](./mobile/architecture.md)** - Technical architecture and module documentation
+
+### Xander Conversation Engine
+
+- **[Engine Overview](./xander-engine/README.md)** - Introduction to the Xander Conversation Engine
+- **[Setup Guide](./xander-engine/setup.md)** - Installation and Termux deployment
+- **[API Reference](./xander-engine/api-reference.md)** - Complete HTTP API documentation
+- **[Architecture](./xander-engine/architecture.md)** - Technical architecture and module documentation
 
 ### Project Plans
 
@@ -52,16 +65,15 @@ autoxan/
 │  │ "Talk to Xander" │     │  • Voice interface (STT/TTS)     │  │
 │  └──────────────────┘     │  • Audio focus management         │  │
 │                           └────────────────┬─────────────────┘  │
-│                                            │                     │
+│                                            │ HTTP                │
 │                                            ▼                     │
 │                           ┌──────────────────────────────────┐  │
-│                           │ XANDER (Phone Agent - Termux)    │  │
+│                           │ XANDER ENGINE (Termux/Node.js)   │  │
 │                           │                                  │  │
-│                           │ Conversational AI:                │  │
-│                           │ • Natural, flowing conversation  │  │
-│                           │ • Light research (quick lookups) │  │
-│                           │ • Shapes ideas with you          │  │
-│                           │ • Dispatches work to Silas       │  │
+│                           │ • Session management (30-min)    │  │
+│                           │ • LLM integration (Claude)       │  │
+│                           │ • Dispatch detection             │  │
+│                           │ • Task queue                     │  │
 │                           └────────────────┬─────────────────┘  │
 │                                            │                     │
 └────────────────────────────────────────────│─────────────────────┘
@@ -95,8 +107,12 @@ The entire experience is optimized for hands-free, eyes-free interaction - perfe
 ## Current Status
 
 - ✅ **Phase 1: Project Setup** - Expo project initialized with dependencies
-- ⏳ **Phase 2: Voice Hooks** - Coming next
-- ⏳ **Phase 3-10** - See [project plan](../plans/xander-voice-app-plan.md)
+- ✅ **Phase 2: Voice Hooks** - STT/TTS hooks implemented
+- ✅ **Phase 3: Xander API Client** - HTTP client for engine communication
+- ✅ **Phase 4: State Machine** - Voice flow state management
+- ✅ **Phase 5: Audio Focus** - Native Android audio focus module
+- ✅ **Phase 6: Conversation Engine** - Node.js backend with Claude integration
+- ⏳ **Phase 7-10** - See [project plan](../plans/xander-voice-app-plan.md)
 
 ## Contributing
 
@@ -109,4 +125,4 @@ When contributing to documentation:
 
 ---
 
-*Last updated: Phase 1 - Expo Project Setup*
+*Last updated: Phase 6 - Conversation Engine Implementation*
