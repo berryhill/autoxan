@@ -102,8 +102,30 @@ jest.mock('expo-speech-recognition', () => {
   };
 });
 
-// Mock react-native
+// Store event listeners for AudioFocusManager
+const audioFocusListeners: Record<string, ((event: unknown) => void)[]> = {};
+
+// Mock react-native with AudioFocusManager native module
 jest.mock('react-native', () => {
+  // Create mock AudioFocusManager
+  const mockAudioFocusManager = {
+    requestFocus: jest.fn().mockResolvedValue(true),
+    abandonFocus: jest.fn().mockResolvedValue(true),
+    hasFocus: jest.fn().mockResolvedValue(false),
+    addListener: jest.fn(),
+    removeListeners: jest.fn(),
+    // Helper to emit events in tests
+    __emitEvent: (event: string, data: unknown) => {
+      audioFocusListeners[event]?.forEach((cb) => cb(data));
+    },
+    // Helper to clear listeners between tests
+    __clearListeners: () => {
+      Object.keys(audioFocusListeners).forEach((key) => {
+        audioFocusListeners[key] = [];
+      });
+    },
+  };
+
   return {
     Platform: {
       OS: 'android',
@@ -112,14 +134,52 @@ jest.mock('react-native', () => {
     StyleSheet: {
       create: (styles: Record<string, unknown>) => styles,
     },
+    NativeModules: {
+      AudioFocusManager: mockAudioFocusManager,
+    },
+    NativeEventEmitter: jest.fn().mockImplementation(() => ({
+      addListener: jest.fn((event: string, callback: (event: unknown) => void) => {
+        if (!audioFocusListeners[event]) {
+          audioFocusListeners[event] = [];
+        }
+        audioFocusListeners[event].push(callback);
+        return {
+          remove: jest.fn(() => {
+            const index = audioFocusListeners[event]?.indexOf(callback);
+            if (index !== undefined && index > -1) {
+              audioFocusListeners[event].splice(index, 1);
+            }
+          }),
+        };
+      }),
+      removeAllListeners: jest.fn((event: string) => {
+        audioFocusListeners[event] = [];
+      }),
+    })),
   };
 });
 
 // Reset all mocks before each test
 beforeEach(() => {
   jest.clearAllMocks();
-  // Clear listeners
+  // Clear speech recognition listeners
   Object.keys(speechRecognitionListeners).forEach((key) => {
     speechRecognitionListeners[key] = [];
   });
+  // Clear audio focus listeners
+  Object.keys(audioFocusListeners).forEach((key) => {
+    audioFocusListeners[key] = [];
+  });
 });
+
+// Export helpers for tests that need to emit events
+export const testHelpers = {
+  emitAudioFocusEvent: (event: string, data: unknown) => {
+    audioFocusListeners[event]?.forEach((cb) => cb(data));
+  },
+  clearAudioFocusListeners: () => {
+    Object.keys(audioFocusListeners).forEach((key) => {
+      audioFocusListeners[key] = [];
+    });
+  },
+};
