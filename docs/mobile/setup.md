@@ -378,6 +378,81 @@ npx eas build --platform android --profile production
 npx eas build --platform android --profile production
 ```
 
+## Native Module Integration
+
+The app includes native Android modules that require additional setup after running Expo prebuild.
+
+### Audio Focus Module (Android)
+
+The `AudioFocusModule` enables the app to pause other audio apps (like Spotify or YouTube Music) when Xander speaks, and resume them when the conversation ends.
+
+**Prerequisites:**
+- Run Expo prebuild first: `npx expo prebuild --platform android`
+- Ensure you have Android SDK installed
+
+**Integration Steps:**
+
+1. **Run Expo Prebuild** (if not already done):
+   ```bash
+   cd mobile
+   npx expo prebuild --platform android
+   ```
+
+2. **Copy Native Module Files:**
+   ```bash
+   cp -r native-modules/android/com/xandervoice/* \
+     android/app/src/main/java/com/xandervoice/
+   ```
+
+3. **Register the Package in MainApplication.kt:**
+   
+   Open `android/app/src/main/java/com/xandervoice/MainApplication.kt` and add:
+   
+   ```kotlin
+   import com.xandervoice.AudioFocusPackage
+   
+   // In getPackages() method, add:
+   override fun getPackages(): List<ReactPackage> =
+     PackageList(this).packages.apply {
+       add(AudioFocusPackage())
+     }
+   ```
+
+4. **Rebuild the App:**
+   ```bash
+   npx expo run:android
+   ```
+
+**Verification:**
+
+After integration, the `useAudioFocus` hook should work correctly:
+
+```typescript
+import { useAudioFocus } from '@/hooks';
+
+const { requestFocus, abandonFocus, checkFocus } = useAudioFocus({
+  onFocusGained: () => console.log('Audio focus gained'),
+  onFocusLost: (permanent) => console.log('Audio focus lost', permanent),
+});
+
+// Request focus - this should pause other audio apps
+const granted = await requestFocus();
+console.log('Focus granted:', granted);
+```
+
+**Troubleshooting:**
+
+If the native module is not found:
+- Ensure the files were copied to the correct location
+- Verify the package is registered in `MainApplication.kt`
+- Clean and rebuild: `cd android && ./gradlew clean && cd .. && npx expo run:android`
+
+For detailed API documentation, see:
+- [Architecture Guide - Native Modules](./architecture.md#native-modules)
+- [Native Module README](../../mobile/native-modules/android/README.md)
+
+---
+
 ## Next Steps
 
 After setup is complete:
@@ -395,4 +470,4 @@ Currently, no environment variables are required for Phase 1. Future phases may 
 
 ---
 
-*Last updated: Phase 2 - Voice Hooks Implementation (STT/TTS)*
+*Last updated: Phase 5 - Audio Focus Management - Native Module Integration*

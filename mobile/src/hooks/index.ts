@@ -8,3 +8,6 @@ export type { VoiceState, VoiceOptions, UseVoiceResult } from './useVoice';
 
 export { useSpeech } from './useSpeech';
 export type { SpeechOptions, SpeechState, UseSpeechResult } from './useSpeech';
+
+export { useAudioFocus } from './useAudioFocus';
+export type { UseAudioFocusOptions, UseAudioFocusResult } from './useAudioFocus';

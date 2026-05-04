@@ -16,16 +16,16 @@ The Xander Voice App is built with React Native (Expo) and follows a modular arc
 │  │             │  │             │  │                         │  │
 │  │ VoiceButton │  │ useVoice    │  │ sessionStore            │  │
 │  │             │  │ useSpeech   │  │ • sessionState          │  │
-│  │             │  │             │  │ • messages              │  │
+│  │             │  │ useAudioFocus│ │ • messages              │  │
 │  └─────────────┘  └─────────────┘  │ • dispatchedWork        │  │
 │                                     └─────────────────────────┘  │
 │  ┌─────────────────────────────┐  ┌─────────────────────────┐    │
-│  │         API Layer           │  │       Utilities          │    │
+│  │         API Layer           │  │    Native Modules        │    │
 │  │                             │  │                         │    │
-│  │ xanderApi                   │  │ audioFocus              │    │
-│  │ • sendMessage()            │  │ • requestAudioFocus()   │    │
-│  │ • startSession()           │  │ • abandonAudioFocus()   │    │
-│  │ • dispatch()               │  │                         │    │
+│  │ xanderApi                   │  │ AudioFocusManager       │    │
+│  │ • sendMessage()            │  │ • requestFocus()        │    │
+│  │ • startSession()           │  │ • abandonFocus()        │    │
+│  │ • dispatch()               │  │ • hasFocus()            │    │
 │  │ • healthCheck()            │  │                         │    │
 │  └─────────────────────────────┘  └─────────────────────────┘    │
 │                                                                  │
@@ -48,6 +48,12 @@ mobile/
 │   ├── adaptive-icon.png
 │   ├── splash-icon.png
 │   └── favicon.png
+├── native-modules/                  # Native platform modules
+│   └── android/                     # Android native modules
+│       ├── README.md                # Integration instructions
+│       └── com/xandervoice/         # Kotlin source files
+│           ├── AudioFocusModule.kt  # Audio focus native module
+│           └── AudioFocusPackage.kt # React package registration
 └── src/
     ├── api/                         # API clients
     │   ├── index.ts                 # Barrel export
@@ -63,9 +69,11 @@ mobile/
     │   ├── index.ts                 # Barrel export
     │   ├── useVoice.ts              # Speech-to-Text hook
     │   ├── useSpeech.ts             # Text-to-Speech hook
+    │   ├── useAudioFocus.ts         # Audio focus management hook
     │   └── __tests__/               # Hook unit tests
     │       ├── useVoice.test.ts     # STT hook tests
-    │       └── useSpeech.test.ts    # TTS hook tests
+    │       ├── useSpeech.test.ts    # TTS hook tests
+    │       └── useAudioFocus.test.ts # Audio focus hook tests (21 tests)
     ├── store/                       # State management
     │   ├── index.ts                 # Barrel export
     │   ├── types.ts                 # Type definitions & state machine
@@ -74,7 +82,7 @@ mobile/
     │       └── sessionStore.test.ts # Session store tests (158 tests)
     └── utils/                       # Utility functions
         ├── index.ts                 # Barrel export
-        └── audioFocus.ts            # Audio focus utilities
+        └── audioFocus.ts            # Audio focus utilities (legacy)
 ```
 
 ## Module Documentation
@@ -416,6 +424,167 @@ function TextReader() {
   );
 }
 ```
+
+---
+
+#### useAudioFocus (`src/hooks/useAudioFocus.ts`)
+
+Custom hook for managing Android audio focus. Wraps the native `AudioFocusManager` module to pause music/podcasts when Xander speaks and resume them when the conversation ends.
+
+**Purpose:**
+- Pause music/podcasts when Xander starts speaking
+- Resume music when the conversation ends
+- Handle audio focus changes from other apps
+- Platform-aware (Android-only, no-op on iOS)
+
+**Options:**
+```typescript
+interface UseAudioFocusOptions {
+  /** Called when audio focus is gained */
+  onFocusGained?: () => void;
+  /** Called when audio focus is lost */
+  onFocusLost?: (permanent: boolean) => void;
+  /** Called when audio should be ducked (lowered) */
+  onDuck?: () => void;
+}
+```
+
+**Return Type:**
+```typescript
+interface UseAudioFocusResult {
+  /** Request audio focus (pauses other audio apps) */
+  requestFocus: () => Promise<boolean>;
+  /** Abandon audio focus (allows other audio to resume) */
+  abandonFocus: () => Promise<void>;
+  /** Check if we currently have audio focus */
+  checkFocus: () => Promise<boolean>;
+}
+```
+
+**Methods:**
+| Method | Type | Description |
+|--------|------|-------------|
+| `requestFocus` | `() => Promise<boolean>` | Request transient audio focus. Returns true if granted. Pauses other audio apps. |
+| `abandonFocus` | `() => Promise<void>` | Release audio focus. Allows other audio apps to resume. |
+| `checkFocus` | `() => Promise<boolean>` | Check if we currently have audio focus. |
+
+**Event Callbacks:**
+| Callback | Signature | Description |
+|----------|-----------|-------------|
+| `onFocusGained` | `() => void` | Called when audio focus is granted |
+| `onFocusLost` | `(permanent: boolean) => void` | Called when focus is lost. `permanent` indicates if loss is temporary (can be regained) or permanent |
+| `onDuck` | `() => void` | Called when audio should be ducked (lowered volume temporarily) |
+
+**Platform Behavior:**
+| Platform | Behavior |
+|----------|----------|
+| Android | Full audio focus management via native module |
+| iOS | No-op functions that return success (iOS handles audio automatically) |
+
+**Audio Focus Flow:**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    AUDIO FOCUS FLOW                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Session Start                                                   │
+│       │                                                          │
+│       ▼                                                          │
+│  ┌──────────────┐                                               │
+│  │ requestFocus │ ──▶ Music/Podcasts pause                     │
+│  └──────────────┘                                               │
+│       │                                                          │
+│       ▼                                                          │
+│  ┌──────────────┐     ┌──────────────┐                          │
+│  │  Speaking    │ ◀───│  Listening   │ ◀─┐                      │
+│  └──────────────┘     └──────────────┘   │                      │
+│       │                      │           │                      │
+│       └──────────────────────┴───────────┘                      │
+│                      │                                          │
+│                      ▼                                          │
+│  Session End / Goodbye                                          │
+│       │                                                          │
+│       ▼                                                          │
+│  ┌───────────────┐                                               │
+│  │ abandonFocus  │ ──▶ Music/Podcasts resume                    │
+│  └───────────────┘                                               │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Usage:**
+```tsx
+import { useAudioFocus } from '@/hooks';
+
+function ConversationManager() {
+  const { requestFocus, abandonFocus, checkFocus } = useAudioFocus({
+    onFocusGained: () => {
+      console.log('Audio focus gained - can speak');
+    },
+    onFocusLost: (permanent) => {
+      if (permanent) {
+        console.log('Lost focus permanently - another app took over');
+      } else {
+        console.log('Lost focus temporarily - will regain soon');
+      }
+    },
+    onDuck: () => {
+      console.log('Should lower volume briefly');
+    },
+  });
+
+  const startSession = async () => {
+    // Request audio focus when starting conversation
+    const granted = await requestFocus();
+    if (granted) {
+      console.log('Got audio focus - music paused');
+      // Start listening...
+    } else {
+      console.warn('Could not get audio focus');
+    }
+  };
+
+  const endSession = async () => {
+    // Release audio focus when ending conversation
+    await abandonFocus();
+    console.log('Released audio focus - music can resume');
+  };
+
+  return (
+    // ... component JSX
+  );
+}
+```
+
+**Integration with State Machine:**
+```tsx
+import { useAudioFocus } from '@/hooks';
+import { useSessionStore } from '@/store';
+
+function App() {
+  const { sessionState, transitionTo } = useSessionStore();
+  const { requestFocus, abandonFocus } = useAudioFocus({
+    onFocusLost: (permanent) => {
+      if (permanent) {
+        // Another app took audio - pause our conversation
+        transitionTo('ended');
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (sessionState === 'connecting') {
+      // Request focus when starting
+      requestFocus();
+    } else if (sessionState === 'ended') {
+      // Release focus when ending
+      abandonFocus();
+    }
+  }, [sessionState]);
+}
+```
+
+**Status:** ✅ Complete (Phase 5)
 
 ---
 
@@ -820,11 +989,118 @@ function ConversationManager() {
 
 ---
 
+### Native Modules
+
+Native modules provide platform-specific functionality that cannot be achieved with JavaScript alone. These modules are written in Kotlin (Android) and integrated with React Native.
+
+#### Location
+
+Native modules are located in `mobile/native-modules/android/` and must be copied to the generated `android/` directory after running Expo prebuild.
+
+#### AudioFocusManager (`native-modules/android/com/xandervoice/`)
+
+The AudioFocusManager native module handles Android audio focus management.
+
+**Files:**
+| File | Purpose |
+|------|---------|
+| `AudioFocusModule.kt` | Main module implementation with focus management logic |
+| `AudioFocusPackage.kt` | React Native package registration |
+
+**Purpose:**
+- Request audio focus from the Android system
+- Abandon audio focus to let other apps resume
+- Emit events when focus state changes
+- Support Android 8.0+ (API 26+) AudioFocusRequest API with fallback for older versions
+
+**Native Methods:**
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `requestFocus()` | `Promise<boolean>` | Request transient audio focus. Returns true if granted. |
+| `abandonFocus()` | `Promise<boolean>` | Release audio focus. Returns true on success. |
+| `hasFocus()` | `Promise<boolean>` | Check if we currently have audio focus. |
+
+**Events:**
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `audioFocusGained` | `null` | Fired when we gain audio focus |
+| `audioFocusLost` | `{ permanent: boolean }` | Fired when we lose audio focus |
+| `audioFocusDuck` | `null` | Fired when we should lower volume briefly |
+
+**Integration:**
+
+After running `npx expo prebuild --platform android`:
+
+1. Copy the native module files:
+   ```bash
+   cp -r native-modules/android/com/xandervoice/* \
+     android/app/src/main/java/com/xandervoice/
+   ```
+
+2. Register the package in `MainApplication.kt`:
+   ```kotlin
+   override fun getPackages(): List<ReactPackage> =
+     PackageList(this).packages.apply {
+       add(AudioFocusPackage())
+     }
+   ```
+
+See `mobile/native-modules/android/README.md` for detailed integration instructions.
+
+**Usage from JavaScript:**
+```typescript
+// Using the native module directly
+import { NativeModules, NativeEventEmitter } from 'react-native';
+
+const { AudioFocusManager } = NativeModules;
+const eventEmitter = new NativeEventEmitter(AudioFocusManager);
+
+// Request audio focus (pauses other audio)
+const granted = await AudioFocusManager.requestFocus();
+
+// Check if we have focus
+const hasFocus = await AudioFocusManager.hasFocus();
+
+// Abandon focus (lets other audio resume)
+await AudioFocusManager.abandonFocus();
+
+// Listen for focus changes
+eventEmitter.addListener('audioFocusGained', () => {
+  console.log('Audio focus gained');
+});
+
+eventEmitter.addListener('audioFocusLost', (event) => {
+  console.log('Audio focus lost, permanent:', event.permanent);
+});
+```
+
+**Recommended Usage:**
+
+Use the `useAudioFocus` hook instead of the native module directly. The hook provides:
+- Automatic event listener cleanup
+- Platform-aware behavior (no-op on iOS)
+- React lifecycle integration
+- Callback-based API
+
+```typescript
+import { useAudioFocus } from '@/hooks';
+
+const { requestFocus, abandonFocus, checkFocus } = useAudioFocus({
+  onFocusGained: () => console.log('Got focus'),
+  onFocusLost: (permanent) => console.log('Lost focus', permanent),
+  onDuck: () => console.log('Should duck'),
+});
+```
+
+**Status:** ✅ Complete (Phase 5)
+
+---
+
 ### Utilities
 
 #### audioFocus (`src/utils/audioFocus.ts`)
 
-Utilities for Android audio focus management.
+Legacy utility functions for Android audio focus management. **Deprecated in favor of the `useAudioFocus` hook.**
 
 **Purpose:**
 - Pause other audio apps when Xander starts
@@ -849,17 +1125,24 @@ Utilities for Android audio focus management.
 | `takeAudioFocusForConversation()` | High-level: start session |
 | `releaseAudioFocusAfterConversation()` | High-level: end session |
 
-**Status:** Placeholder - requires native module in Phase 5
+**Status:** ⚠️ Legacy - Use `useAudioFocus` hook instead
 
-**Usage:**
+**Migration:**
+
 ```tsx
+// OLD (deprecated utility)
 import { takeAudioFocusForConversation, releaseAudioFocusAfterConversation } from '@/utils';
 
-// When starting conversation
 await takeAudioFocusForConversation();
-
-// When ending conversation
 await releaseAudioFocusAfterConversation();
+
+// NEW (recommended hook)
+import { useAudioFocus } from '@/hooks';
+
+const { requestFocus, abandonFocus } = useAudioFocus();
+
+await requestFocus();
+await abandonFocus();
 ```
 
 ---
@@ -912,11 +1195,12 @@ Each directory has an `index.ts` that re-exports its contents:
 // src/hooks/index.ts
 export { useVoice } from './useVoice';
 export { useSpeech } from './useSpeech';
+export { useAudioFocus } from './useAudioFocus';
 ```
 
 This enables clean imports:
 ```typescript
-import { useVoice, useSpeech } from '@/hooks';
+import { useVoice, useSpeech, useAudioFocus } from '@/hooks';
 ```
 
 ### Custom Hooks
@@ -924,6 +1208,7 @@ import { useVoice, useSpeech } from '@/hooks';
 Encapsulate complex logic in custom hooks:
 - `useVoice` - Voice recognition logic
 - `useSpeech` - Speech synthesis logic
+- `useAudioFocus` - Android audio focus management
 
 ### Zustand for State
 
@@ -1013,4 +1298,4 @@ export const useNewStore = create<NewStoreState>((set) => ({
 
 ---
 
-*Last updated: Phase 4 - State Machine - Voice App Flow Control (Complete conversation loop with state validation, inactivity timeout, goodbye detection)*
+*Last updated: Phase 5 - Audio Focus Management - Native Module (Android audio focus management with native Kotlin module, useAudioFocus hook, and platform-aware behavior)*

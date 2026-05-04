@@ -10,7 +10,7 @@ The app provides a hands-free, eyes-free conversational experience - perfect for
 
 ## Features
 
-### Current (Phase 2)
+### Current (Phase 5)
 
 - ✅ Basic voice interface UI with VoiceButton component
 - ✅ **Speech-to-Text (STT)** - Full implementation using `expo-speech-recognition`
@@ -24,17 +24,29 @@ The app provides a hands-free, eyes-free conversational experience - perfect for
   - Voice selection and listing
   - Input validation and max length handling
 - ✅ Session state management with Zustand
-- ✅ HTTP client placeholder for Xander API
-- ✅ Audio focus utility placeholders
+- ✅ **Xander API integration** (Phase 3)
+  - Full HTTP client for Xander agent communication
+  - Session management (start, end, retrieve)
+  - Dispatch functionality to silas-workstation
+  - Health check and graceful error handling
+- ✅ **State machine for voice flow** (Phase 4)
+  - Complete conversation loop with state validation
+  - 30-second inactivity timeout
+  - Goodbye keyword detection
+  - Validated state transitions
+- ✅ **Audio Focus Management** (Phase 5)
+  - Native Android `AudioFocusModule` in Kotlin
+  - `useAudioFocus` hook with React lifecycle integration
+  - Pauses music/podcasts when Xander speaks
+  - Resumes other audio when conversation ends
+  - Platform-aware (Android-only, no-op on iOS)
+  - Event callbacks: onFocusGained, onFocusLost, onDuck
 - ✅ Android permissions configured (RECORD_AUDIO, MODIFY_AUDIO_SETTINGS)
 - ✅ **Unit testing infrastructure** with Jest and React Native Testing Library
-  - 55 unit tests covering voice hooks
+  - 234+ unit tests covering all hooks, API, and store
 
 ### Planned
 
-- ⏳ Xander API integration (Phase 3)
-- ⏳ State machine for voice flow (Phase 4)
-- ⏳ Audio focus management - pause/resume music (Phase 5)
 - ⏳ Gesture controls for conversation control (Phase 6+)
 
 ## Quick Start
@@ -73,19 +85,26 @@ mobile/
 ├── app.json                         # Expo configuration
 ├── package.json                     # Dependencies
 ├── tsconfig.json                    # TypeScript config
+├── native-modules/                  # Native platform modules
+│   └── android/                     # Android native modules
+│       ├── README.md                # Integration instructions
+│       └── com/xandervoice/         # Kotlin source files
+│           ├── AudioFocusModule.kt  # Audio focus native module
+│           └── AudioFocusPackage.kt # React package registration
 └── src/
     ├── components/
     │   └── ui/
     │       └── VoiceButton.tsx      # Voice button component
     ├── hooks/
     │   ├── useVoice.ts              # Speech-to-Text hook
-    │   └── useSpeech.ts             # Text-to-Speech hook
+    │   ├── useSpeech.ts             # Text-to-Speech hook
+    │   └── useAudioFocus.ts         # Audio focus management hook
     ├── api/
     │   └── xanderApi.ts             # Xander HTTP client
     ├── store/
     │   └── sessionStore.ts          # Zustand state management
     └── utils/
-        └── audioFocus.ts            # Audio focus utilities
+        └── audioFocus.ts            # Audio focus utilities (legacy)
 ```
 
 For detailed architecture information, see [Architecture Guide](./architecture.md).
@@ -155,4 +174,4 @@ npx eas build --platform android
 
 ---
 
-*Last updated: Phase 2 - Voice Hooks Implementation (STT/TTS)*
+*Last updated: Phase 5 - Audio Focus Management - Native Module*
