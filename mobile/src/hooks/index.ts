@@ -4,7 +4,7 @@
  */
 
 export { useVoice } from './useVoice';
-export type { VoiceState, UseVoiceResult } from './useVoice';
+export type { VoiceState, VoiceOptions, UseVoiceResult } from './useVoice';
 
 export { useSpeech } from './useSpeech';
 export type { SpeechOptions, SpeechState, UseSpeechResult } from './useSpeech';
