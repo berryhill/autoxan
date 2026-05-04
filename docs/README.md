@@ -23,38 +23,30 @@ autoxan/
 │   │   ├── README.md          # Mobile app overview
 │   │   ├── setup.md           # Setup instructions
 │   │   └── architecture.md    # Architecture documentation
-│   └── xander-engine/         # Conversation engine documentation
+│   ├── hermes/                # Hermes Agent documentation
+│   │   ├── README.md          # Hermes overview in Autoxan
+│   │   ├── configuration.md   # Configuration reference
+│   │   └── setup.md           # Termux setup guide
+│   └── xander-engine/         # [DEPRECATED] Legacy engine docs
 │       ├── README.md          # Engine overview
 │       ├── setup.md           # Installation & Termux deployment
 │       ├── api-reference.md   # Complete API documentation
 │       └── architecture.md    # Technical architecture
+├── hermes/                    # Hermes Agent configuration for Xander
+│   ├── config.yaml            # Hermes settings (model, memory, MCP)
+│   ├── SOUL.md                # Xander personality & system prompt
+│   └── README.md              # Quick start guide
 ├── mobile/                    # Xander Voice App (React Native/Expo)
-├── xander-engine/             # Xander Conversation Engine (Node.js)
+├── xander-engine/             # [DEPRECATED] Legacy conversation engine
 └── plans/                     # Project plans and specifications
-    ├── xander-voice-app-plan.md    # Detailed project plan
-    └── gesture-ring-plan.md        # Future gesture control plans
+    ├── xander-voice-app-plan.md        # Detailed project plan
+    ├── hermes-architecture-overhaul.md # Migration to Hermes
+    └── gesture-ring-plan.md            # Future gesture control plans
 ```
 
-## Documentation Index
+## Architecture Overview
 
-### Mobile App (Xander Voice App)
-
-- **[Mobile Overview](./mobile/README.md)** - Introduction to the Xander Voice App
-- **[Setup Guide](./mobile/setup.md)** - How to set up and run the mobile app
-- **[Architecture](./mobile/architecture.md)** - Technical architecture and module documentation
-
-### Xander Conversation Engine
-
-- **[Engine Overview](./xander-engine/README.md)** - Introduction to the Xander Conversation Engine
-- **[Setup Guide](./xander-engine/setup.md)** - Installation and Termux deployment
-- **[API Reference](./xander-engine/api-reference.md)** - Complete HTTP API documentation
-- **[Architecture](./xander-engine/architecture.md)** - Technical architecture and module documentation
-
-### Project Plans
-
-- **[Xander Voice App Plan](../plans/xander-voice-app-plan.md)** - Complete project specification with phases, architecture diagrams, and success criteria
-
-## How It Works
+The project uses **Hermes Agent** as the AI backend for the Xander conversational companion. This replaces the legacy `xander-engine` custom implementation.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -68,27 +60,61 @@ autoxan/
 │                                            │ HTTP                │
 │                                            ▼                     │
 │                           ┌──────────────────────────────────┐  │
-│                           │ XANDER ENGINE (Termux/Node.js)   │  │
+│                           │ HERMES AGENT (Termux)            │  │
 │                           │                                  │  │
-│                           │ • Session management (30-min)    │  │
-│                           │ • LLM integration (Claude)       │  │
-│                           │ • Dispatch detection             │  │
-│                           │ • Task queue                     │  │
+│                           │ • SOUL.md - Xander personality   │  │
+│                           │ • config.yaml - Settings         │  │
+│                           │ • Memory persistence             │  │
+│                           │ • OpenRouter LLM integration     │  │
+│                           │ • MCP dispatch to Silas          │  │
 │                           └────────────────┬─────────────────┘  │
 │                                            │                     │
 └────────────────────────────────────────────│─────────────────────┘
-                                             │ Dispatch (MCP)
+                                             │ MCP Protocol
                                              ▼
-                           ┌──────────────────────────────────────┐
-                           │ SILAS (Workstation Admin)            │
-                           │                                      │
-                           │ Execution Engine:                    │
-                           │ • Receives dispatched work           │
-                           │ • Creates detailed plans             │
-                           │ • Queues tasks for execution         │
-                           │ • Heavy research & analysis          │
-                           └──────────────────────────────────────┘
+                            ┌──────────────────────────────────────┐
+                            │ SILAS (Workstation Admin)            │
+                            │                                      │
+                            │ Execution Engine:                    │
+                            │ • Receives dispatched work           │
+                            │ • Creates detailed plans             │
+                            │ • Queues tasks for execution         │
+                            │ • Heavy research & analysis          │
+                            └──────────────────────────────────────┘
 ```
+
+## Documentation Index
+
+### Hermes Agent (Xander Backend)
+
+- **[Hermes Overview](./hermes/README.md)** - Introduction to Hermes in Autoxan
+- **[Configuration Reference](./hermes/configuration.md)** - Detailed config.yaml documentation
+- **[Setup Guide](./hermes/setup.md)** - Termux installation and setup
+
+### Mobile App (Xander Voice App)
+
+- **[Mobile Overview](./mobile/README.md)** - Introduction to the Xander Voice App
+- **[Setup Guide](./mobile/setup.md)** - How to set up and run the mobile app
+- **[Architecture](./mobile/architecture.md)** - Technical architecture and module documentation
+
+### Hermes Configuration Files
+
+The actual configuration files are in the `/hermes` directory:
+
+- **[hermes/config.yaml](../hermes/config.yaml)** - Hermes configuration
+- **[hermes/SOUL.md](../hermes/SOUL.md)** - Xander personality definition
+- **[hermes/README.md](../hermes/README.md)** - Quick start and test cases
+
+### Project Plans
+
+- **[Hermes Architecture Overhaul](../plans/hermes-architecture-overhaul.md)** - Migration plan from xander-engine to Hermes
+- **[Xander Voice App Plan](../plans/xander-voice-app-plan.md)** - Complete project specification
+
+### Legacy Documentation
+
+> ⚠️ **Note**: The `xander-engine/` directory and its documentation are deprecated. The project has migrated to using Hermes Agent. See the [Hermes documentation](./hermes/README.md) for current architecture.
+
+- **[Engine Overview](./xander-engine/README.md)** - [DEPRECATED] Legacy engine documentation
 
 ## Key Concepts
 
@@ -104,6 +130,14 @@ When an idea crystallizes into real work, Xander can stamp a robust plan to Sila
 
 The entire experience is optimized for hands-free, eyes-free interaction - perfect for driving, walking, or multitasking.
 
+### Hermes Agent
+
+The project uses [Hermes Agent](https://hermes-agent.nousresearch.com/) as the AI backend:
+- **Personality via SOUL.md** - Define Xander's character and behavior
+- **OpenRouter Integration** - Access to 200+ LLM models
+- **Persistent Memory** - Remembers user preferences across sessions
+- **MCP Protocol** - Standard dispatch to Silas workstation
+
 ## Current Status
 
 - ✅ **Phase 1: Project Setup** - Expo project initialized with dependencies
@@ -111,7 +145,8 @@ The entire experience is optimized for hands-free, eyes-free interaction - perfe
 - ✅ **Phase 3: Xander API Client** - HTTP client for engine communication
 - ✅ **Phase 4: State Machine** - Voice flow state management
 - ✅ **Phase 5: Audio Focus** - Native Android audio focus module
-- ✅ **Phase 6: Conversation Engine** - Node.js backend with Claude integration
+- ✅ **Hermes Configuration** - Xander personality and config created
+- 🔄 **Hermes Integration** - Migrating to Hermes backend
 - ⏳ **Phase 7-10** - See [project plan](../plans/xander-voice-app-plan.md)
 
 ## Contributing
@@ -122,7 +157,8 @@ When contributing to documentation:
 2. Update relevant docs when code changes
 3. Follow the established format in existing documentation
 4. Place all documentation in the `docs/` directory
+5. When updating Hermes configuration, update both `/hermes/` files and `/docs/hermes/` documentation
 
 ---
 
-*Last updated: Phase 6 - Conversation Engine Implementation*
+*Last updated: Hermes Architecture Migration*
