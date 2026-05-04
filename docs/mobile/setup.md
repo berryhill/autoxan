@@ -185,6 +185,81 @@ import { VoiceButton } from '@/components/ui';
 | `android` | `npm run android` | Run on Android |
 | `ios` | `npm run ios` | Run on iOS |
 | `web` | `npm run web` | Run in web browser |
+| `test` | `npm test` | Run unit tests |
+| `test:watch` | `npm run test:watch` | Run tests in watch mode |
+| `test:coverage` | `npm run test:coverage` | Run tests with coverage report |
+
+## Testing
+
+The mobile app includes a comprehensive testing setup using Jest and React Native Testing Library.
+
+### Running Tests
+
+```bash
+# Run all tests once
+npm test
+# or
+pnpm test
+
+# Run tests in watch mode (re-runs on file changes)
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+### Test Configuration
+
+Tests are configured in `package.json` with the following settings:
+
+- **Test Environment**: `jsdom`
+- **Transform**: Babel with TypeScript, React, and environment presets
+- **Setup File**: `jest.setup.ts` (configures mocks and test environment)
+- **Test Match**: Files in `__tests__/` directories or files with `.test.ts`/`.spec.ts` extensions
+
+### Test Files
+
+| File | Description |
+|------|-------------|
+| `src/hooks/__tests__/useVoice.test.ts` | Speech-to-Text hook tests |
+| `src/hooks/__tests__/useSpeech.test.ts` | Text-to-Speech hook tests |
+
+### Writing Tests
+
+Tests use the React Native Testing Library pattern with mocked Expo modules:
+
+```typescript
+import { renderHook, act } from '@testing-library/react-native';
+import { useVoice } from '../useVoice';
+
+describe('useVoice', () => {
+  it('should start with default state', () => {
+    const { result } = renderHook(() => useVoice());
+    
+    expect(result.current.isListening).toBe(false);
+    expect(result.current.transcript).toBe('');
+  });
+});
+```
+
+### Mocking Expo Modules
+
+Expo modules are mocked in `jest.setup.ts`. When adding new Expo dependencies, add corresponding mocks:
+
+```typescript
+// jest.setup.ts
+jest.mock('expo-speech', () => ({
+  speak: jest.fn(),
+  stop: jest.fn(),
+  // ... other methods
+}));
+```
+
+### Test Coverage
+
+Run `npm run test:coverage` to generate a coverage report. Coverage is collected from:
+- All `.ts` and `.tsx` files in `src/`
+- Excludes `.d.ts` type definition files
 
 ## Troubleshooting
 
@@ -320,4 +395,4 @@ Currently, no environment variables are required for Phase 1. Future phases may 
 
 ---
 
-*Last updated: Phase 1 - Expo Project Setup*
+*Last updated: Phase 2 - Voice Hooks Implementation (STT/TTS)*

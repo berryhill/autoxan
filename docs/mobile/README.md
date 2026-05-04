@@ -10,19 +10,28 @@ The app provides a hands-free, eyes-free conversational experience - perfect for
 
 ## Features
 
-### Current (Phase 1)
+### Current (Phase 2)
 
 - ✅ Basic voice interface UI with VoiceButton component
-- ✅ Text-to-Speech (TTS) via `expo-speech`
-- ✅ Speech-to-Text (STT) setup via `expo-speech-recognition`
+- ✅ **Speech-to-Text (STT)** - Full implementation using `expo-speech-recognition`
+  - Microphone permission handling
+  - Partial (interim) and final transcript results
+  - Configurable options: language, continuous mode, punctuation
+  - Error handling with user-friendly messages
+- ✅ **Text-to-Speech (TTS)** - Enhanced implementation using `expo-speech`
+  - Speak text with configurable pitch, rate, volume, language
+  - Pause/resume support (iOS)
+  - Voice selection and listing
+  - Input validation and max length handling
 - ✅ Session state management with Zustand
 - ✅ HTTP client placeholder for Xander API
 - ✅ Audio focus utility placeholders
 - ✅ Android permissions configured (RECORD_AUDIO, MODIFY_AUDIO_SETTINGS)
+- ✅ **Unit testing infrastructure** with Jest and React Native Testing Library
+  - 55 unit tests covering voice hooks
 
 ### Planned
 
-- ⏳ Voice hooks with real STT/TTS integration (Phase 2)
 - ⏳ Xander API integration (Phase 3)
 - ⏳ State machine for voice flow (Phase 4)
 - ⏳ Audio focus management - pause/resume music (Phase 5)
@@ -146,4 +155,4 @@ npx eas build --platform android
 
 ---
 
-*Last updated: Phase 1 - Expo Project Setup*
+*Last updated: Phase 2 - Voice Hooks Implementation (STT/TTS)*

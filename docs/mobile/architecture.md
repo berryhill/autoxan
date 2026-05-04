@@ -40,6 +40,8 @@ mobile/
 ├── app.json                         # Expo configuration
 ├── package.json                     # Dependencies
 ├── tsconfig.json                    # TypeScript configuration
+├── babel.config.js                  # Babel configuration (for Jest)
+├── jest.setup.ts                    # Jest setup file
 ├── assets/                          # Static assets (icons, images)
 │   ├── icon.png
 │   ├── adaptive-icon.png
@@ -57,7 +59,10 @@ mobile/
     ├── hooks/                       # Custom React hooks
     │   ├── index.ts                 # Barrel export
     │   ├── useVoice.ts              # Speech-to-Text hook
-    │   └── useSpeech.ts             # Text-to-Speech hook
+    │   ├── useSpeech.ts             # Text-to-Speech hook
+    │   └── __tests__/               # Hook unit tests
+    │       ├── useVoice.test.ts     # STT hook tests
+    │       └── useSpeech.test.ts    # TTS hook tests
     ├── store/                       # State management
     │   ├── index.ts                 # Barrel export
     │   └── sessionStore.ts          # Zustand session store
@@ -132,77 +137,232 @@ import { VoiceButton } from '@/components/ui';
 
 #### useVoice (`src/hooks/useVoice.ts`)
 
-Custom hook for Speech-to-Text (STT) functionality.
+Custom hook for Speech-to-Text (STT) functionality using `expo-speech-recognition` (v3.1.3).
 
 **Purpose:**
-- Wrap expo-speech-recognition for voice recognition
-- Manage listening state and transcripts
-- Handle permissions and errors
+- Wrap expo-speech-recognition for cross-platform voice recognition
+- Manage listening state and transcripts (final and partial)
+- Handle microphone permissions and errors
+- Provide configurable recognition options
 
-**Returns:**
+**State:**
 | Property | Type | Description |
 |----------|------|-------------|
-| `isListening` | `boolean` | Currently listening |
-| `transcript` | `string` | Final recognized text |
-| `partialTranscript` | `string` | Partial recognition results |
-| `error` | `string \| null` | Error message |
-| `startListening` | `() => Promise<void>` | Start recognition |
-| `stopListening` | `() => Promise<void>` | Stop recognition |
-| `resetTranscript` | `() => void` | Clear transcript |
+| `isListening` | `boolean` | Currently listening for speech |
+| `transcript` | `string` | Final recognized text (accumulates in continuous mode) |
+| `partialTranscript` | `string` | Interim recognition results (updated in real-time) |
+| `error` | `string \| null` | User-friendly error message |
 
-**Status:** Placeholder - full implementation in Phase 2
+**Methods:**
+| Method | Type | Description |
+|--------|------|-------------|
+| `startListening` | `(options?: VoiceOptions) => Promise<void>` | Start speech recognition with optional configuration |
+| `stopListening` | `() => Promise<void>` | Stop listening and process final result |
+| `abortListening` | `() => Promise<void>` | Abort listening without processing final result |
+| `resetTranscript` | `() => void` | Clear transcript and partial transcript |
+| `isAvailable` | `() => Promise<boolean>` | Check if speech recognition is available on device |
+| `requestPermissions` | `() => Promise<boolean>` | Request microphone and speech recognition permissions |
+
+**Voice Options:**
+```typescript
+interface VoiceOptions {
+  /** Language code for recognition (default: 'en-US') */
+  lang?: string;
+  /** Whether to return partial results (default: true) */
+  interimResults?: boolean;
+  /** Continuous recognition mode (default: false) */
+  continuous?: boolean;
+  /** Add punctuation to results (default: false) */
+  addsPunctuation?: boolean;
+  /** Require on-device recognition (default: false) */
+  requiresOnDeviceRecognition?: boolean;
+}
+```
+
+**Error Handling:**
+
+The hook provides user-friendly error messages for common issues:
+
+| Error Code | Message |
+|------------|---------|
+| `audio-capture` | Failed to capture audio. Please check your microphone. |
+| `not-allowed` | Microphone permission denied. Please enable microphone access. |
+| `network` | Network error. Please check your internet connection. |
+| `no-speech` | No speech detected. Please try again. |
+| `language-not-supported` | The selected language is not supported |
+| `busy` | Speech recognition is busy. Please wait and try again. |
+| `speech-timeout` | Speech input timed out. Please try speaking again. |
+
+**Features:**
+- Automatically requests permissions before starting recognition
+- Prevents duplicate starts when already listening
+- Cleans up recognition on component unmount
+- Accumulates final transcripts (separated by spaces)
+- Silently handles user-initiated abort operations
 
 **Usage:**
 ```tsx
 import { useVoice } from '@/hooks';
 
-const { isListening, transcript, startListening, stopListening } = useVoice();
+function VoiceInput() {
+  const {
+    isListening,
+    transcript,
+    partialTranscript,
+    error,
+    startListening,
+    stopListening,
+    abortListening,
+    resetTranscript,
+    isAvailable,
+    requestPermissions
+  } = useVoice();
+
+  const handleStart = async () => {
+    // Check availability first
+    const available = await isAvailable();
+    if (!available) {
+      console.log('Speech recognition not available');
+      return;
+    }
+
+    // Start with options
+    await startListening({
+      lang: 'en-US',
+      interimResults: true,
+      continuous: false,
+      addsPunctuation: true,
+    });
+  };
+
+  return (
+    <View>
+      <Text>{partialTranscript || transcript}</Text>
+      <Button onPress={isListening ? stopListening : handleStart} />
+      {error && <Text style={{ color: 'red' }}>{error}</Text>}
+    </View>
+  );
+}
 ```
 
 ---
 
 #### useSpeech (`src/hooks/useSpeech.ts`)
 
-Custom hook for Text-to-Speech (TTS) functionality.
+Custom hook for Text-to-Speech (TTS) functionality using `expo-speech` (v14.0.8).
 
 **Purpose:**
-- Wrap expo-speech for text synthesis
-- Manage speaking state
-- Support voice selection and options
+- Wrap expo-speech for cross-platform text synthesis
+- Manage speaking state with pause/resume support
+- Provide voice selection and configurable options
+- Input validation and error handling
 
-**Returns:**
+**State:**
 | Property | Type | Description |
 |----------|------|-------------|
 | `isSpeaking` | `boolean` | Currently speaking |
 | `isPaused` | `boolean` | Speech paused (iOS only) |
 | `error` | `string \| null` | Error message |
-| `speak` | `(text: string, options?) => Promise<void>` | Speak text |
-| `stop` | `() => Promise<void>` | Stop speaking |
-| `pause` | `() => Promise<void>` | Pause (iOS only) |
-| `resume` | `() => Promise<void>` | Resume (iOS only) |
-| `getAvailableVoices` | `() => Promise<Voice[]>` | List voices |
+| `currentText` | `string \| null` | Text currently being spoken |
+| `maxSpeechInputLength` | `number` | Maximum allowed text length |
+
+**Methods:**
+| Method | Type | Description |
+|--------|------|-------------|
+| `speak` | `(text: string, options?: SpeechOptions) => Promise<void>` | Speak text with optional settings |
+| `stop` | `() => Promise<void>` | Stop all speech immediately |
+| `pause` | `() => Promise<void>` | Pause speech (iOS only) |
+| `resume` | `() => Promise<void>` | Resume paused speech (iOS only) |
+| `getAvailableVoices` | `() => Promise<Voice[]>` | Get list of available voices |
+| `checkIsSpeaking` | `() => Promise<boolean>` | Async check if currently speaking |
 
 **Speech Options:**
 ```typescript
 interface SpeechOptions {
-  language?: string;   // e.g., 'en-US'
-  pitch?: number;      // 0.5 to 2.0
-  rate?: number;       // 0.5 to 2.0
-  volume?: number;     // 0.0 to 1.0
-  voice?: string;      // Voice identifier
+  /** Language code (default: 'en-US') */
+  language?: string;
+  /** Pitch of voice (0.5 - 2.0, default: 1.0) */
+  pitch?: number;
+  /** Speaking rate (0.1 - 2.0, default: 1.0) */
+  rate?: number;
+  /** Volume (0.0 - 1.0, default: 1.0) */
+  volume?: number;
+  /** Voice identifier (use getAvailableVoices to get available voices) */
+  voice?: string;
+  /** Callback when speech starts */
   onStart?: () => void;
+  /** Callback when speech completes */
   onDone?: () => void;
+  /** Callback when speech is stopped */
+  onStopped?: () => void;
+  /** Callback when an error occurs */
   onError?: (error: Error) => void;
+  /** Callback when a word boundary is reached (native platforms) */
+  onBoundary?: () => void;
 }
 ```
+
+**Input Validation:**
+- Empty text check: Returns error if text is empty or whitespace-only
+- Max length validation: Returns error if text exceeds `maxSpeechInputLength`
+- Values are clamped to valid ranges (pitch: 0.5-2.0, rate: 0.1-2.0, volume: 0.0-1.0)
+
+**Features:**
+- Automatically stops previous speech before starting new
+- Platform-aware pause/resume (iOS only, gracefully no-op on Android)
+- Cleans up speech on component unmount
+- Tracks current text being spoken
 
 **Usage:**
 ```tsx
 import { useSpeech } from '@/hooks';
 
-const { isSpeaking, speak, stop } = useSpeech();
+function TextReader() {
+  const {
+    isSpeaking,
+    isPaused,
+    currentText,
+    error,
+    speak,
+    stop,
+    pause,
+    resume,
+    getAvailableVoices,
+    checkIsSpeaking,
+    maxSpeechInputLength
+  } = useSpeech();
 
-await speak("Hello, I'm Xander!", { rate: 1.1 });
+  const handleSpeak = async () => {
+    await speak("Hello, I'm Xander!", {
+      rate: 1.1,
+      pitch: 1.0,
+      language: 'en-US',
+      onStart: () => console.log('Started speaking'),
+      onDone: () => console.log('Finished speaking'),
+      onStopped: () => console.log('Speech was stopped'),
+      onError: (err) => console.error('Speech error:', err),
+    });
+  };
+
+  const listVoices = async () => {
+    const voices = await getAvailableVoices();
+    console.log('Available voices:', voices);
+  };
+
+  return (
+    <View>
+      <Text>Max length: {maxSpeechInputLength}</Text>
+      {currentText && <Text>Speaking: {currentText}</Text>}
+      <Button title={isSpeaking ? 'Stop' : 'Speak'}
+              onPress={isSpeaking ? stop : handleSpeak} />
+      {isSpeaking && (
+        <Button title={isPaused ? 'Resume' : 'Pause'}
+                onPress={isPaused ? resume : pause} />
+      )}
+      {error && <Text style={{ color: 'red' }}>{error}</Text>}
+    </View>
+  );
+}
 ```
 
 ---
@@ -399,6 +559,16 @@ await releaseAudioFocusAfterConversation();
 |---------|---------|---------|
 | `typescript` | ~5.9 | Type checking |
 | `@types/react` | ~19.1 | React type definitions |
+| `jest` | ^30.3 | Testing framework |
+| `@types/jest` | ^30.0 | Jest type definitions |
+| `jest-expo` | ^55.0 | Expo Jest preset |
+| `jest-environment-jsdom` | ^30.3 | DOM environment for tests |
+| `@testing-library/react-native` | ^13.3 | React Native testing utilities |
+| `react-test-renderer` | ^19.1 | React test renderer |
+| `babel-jest` | ^30.3 | Babel transform for Jest |
+| `@babel/preset-env` | ^7.28 | Babel environment preset |
+| `@babel/preset-react` | ^7.27 | React Babel preset |
+| `@babel/preset-typescript` | ^7.27 | TypeScript Babel preset |
 
 ---
 
@@ -513,4 +683,4 @@ export const useNewStore = create<NewStoreState>((set) => ({
 
 ---
 
-*Last updated: Phase 1 - Expo Project Setup*
+*Last updated: Phase 2 - Voice Hooks Implementation (STT/TTS)*
