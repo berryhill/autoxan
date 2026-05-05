@@ -29,6 +29,8 @@ Xander is a conversational AI companion optimized for voice interaction, especia
 
 ### Step 1: Install Hermes Agent
 
+**⚠️ Important:** Hermes is NOT on PyPI - must install from source.
+
 ```bash
 # Update packages
 pkg update && pkg upgrade
@@ -36,12 +38,17 @@ pkg update && pkg upgrade
 # Install Python and dependencies
 pkg install python python-pip git
 
-# Install Hermes Agent
-pip install hermes-agent
-
-# OR install from source for latest features
+# Install Hermes Agent (official install script - Recommended)
 curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+source ~/.bashrc
+
+# OR Manual Termux installation
+git clone https://github.com/NousResearch/hermes-agent.git
+cd hermes-agent
+python -m pip install -e '.[termux]' -c constraints-termux.txt
 ```
+
+> **⚠️ Termux Note:** Use `[termux]` extra, NOT `[all]`. The `[all]` extra pulls Android-incompatible dependencies (ctranslate2, onnxruntime).
 
 ### Step 2: Set Up Configuration
 
