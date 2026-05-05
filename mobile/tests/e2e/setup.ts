@@ -324,6 +324,118 @@ export const silasResponses = {
 };
 
 // ============================================================================
+// MCP DISPATCH MOCK RESPONSES
+// ============================================================================
+
+export const mcpResponses = {
+  /** dispatch_task success response */
+  dispatchTask: {
+    success: true,
+    taskId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    message: 'Task dispatched successfully with ID: a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    task: {
+      id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+      type: 'code',
+      description: 'Create a Python script to process CSV files',
+      priority: 'normal',
+      status: 'pending',
+      createdAt: '2026-05-05T00:00:00.000Z',
+    },
+  },
+
+  /** task_status success response */
+  taskStatus: {
+    success: true,
+    task: {
+      id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+      type: 'code',
+      description: 'Create a Python script to process CSV files',
+      priority: 'normal',
+      status: 'completed',
+      context: { sessionId: 'test-session' },
+      metadata: { requestedBy: 'test-user' },
+      result: 'Task completed successfully. Script created at /path/to/script.py',
+      createdAt: '2026-05-05T00:00:00.000Z',
+      startedAt: '2026-05-05T00:01:00.000Z',
+      completedAt: '2026-05-05T00:02:00.000Z',
+    },
+  },
+
+  /** task_status not found response */
+  taskNotFound: {
+    success: false,
+    error: 'Task not found: non-existent-task-id',
+  },
+
+  /** list_tasks success response */
+  listTasks: {
+    success: true,
+    count: 3,
+    stats: {
+      pending: 1,
+      running: 1,
+      completed: 1,
+      failed: 0,
+      cancelled: 0,
+      total: 3,
+    },
+    tasks: [
+      {
+        id: 'task-1-pending',
+        type: 'code',
+        description: 'Create unit tests',
+        priority: 'normal',
+        status: 'pending',
+        createdAt: '2026-05-05T00:00:00.000Z',
+      },
+      {
+        id: 'task-2-running',
+        type: 'research',
+        description: 'Research best practices',
+        priority: 'high',
+        status: 'running',
+        createdAt: '2026-05-05T00:01:00.000Z',
+        startedAt: '2026-05-05T00:02:00.000Z',
+      },
+      {
+        id: 'task-3-completed',
+        type: 'file',
+        description: 'Process log files',
+        priority: 'low',
+        status: 'completed',
+        createdAt: '2026-05-05T00:03:00.000Z',
+        startedAt: '2026-05-05T00:04:00.000Z',
+        completedAt: '2026-05-05T00:05:00.000Z',
+      },
+    ],
+  },
+
+  /** queue_stats response */
+  queueStats: {
+    success: true,
+    stats: {
+      pending: 1,
+      running: 1,
+      completed: 10,
+      failed: 0,
+      cancelled: 0,
+      total: 12,
+    },
+    config: {
+      maxConcurrent: 3,
+      taskRetentionMs: 86400000,
+      cleanupIntervalMs: 3600000,
+    },
+  },
+
+  /** Error response for unavailable silas-workstation */
+  silasUnavailable: {
+    success: false,
+    error: 'silas-workstation is unavailable. Please ensure it is running.',
+  },
+};
+
+// ============================================================================
 // TEST ENVIRONMENT SETUP/CLEANUP
 // ============================================================================
 
@@ -503,6 +615,7 @@ export default {
   getMockInstance,
   mockResponses,
   silasResponses,
+  mcpResponses,
   setupTestEnvironment,
   cleanupTestEnvironment,
   createTestApi,

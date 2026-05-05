@@ -136,6 +136,75 @@ export interface DispatchResponse {
   message: string;
 }
 
+// ====================
+// MCP Dispatch Types
+// ====================
+
+export type McpTaskType = 'code' | 'research' | 'file' | 'general';
+export type McpTaskPriority = 'high' | 'normal' | 'low';
+export type McpTaskStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+
+export interface McpDispatchTaskRequest {
+  type: McpTaskType;
+  description: string;
+  priority?: McpTaskPriority;
+  context?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+}
+
+export interface McpTask {
+  id: string;
+  type: McpTaskType;
+  description: string;
+  priority: McpTaskPriority;
+  status: McpTaskStatus;
+  context?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  result?: string;
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
+}
+
+export interface McpDispatchTaskResponse {
+  success: boolean;
+  taskId?: string;
+  message?: string;
+  task?: McpTask;
+  error?: string;
+}
+
+export interface McpTaskStatusResponse {
+  success: boolean;
+  task?: McpTask;
+  error?: string;
+}
+
+export interface McpListTasksRequest {
+  status?: McpTaskStatus;
+  type?: McpTaskType;
+  priority?: McpTaskPriority;
+  limit?: number;
+  offset?: number;
+}
+
+export interface McpTaskStats {
+  pending: number;
+  running: number;
+  completed: number;
+  failed: number;
+  cancelled: number;
+  total: number;
+}
+
+export interface McpListTasksResponse {
+  success: boolean;
+  count?: number;
+  stats?: McpTaskStats;
+  tasks?: Omit<McpTask, 'context' | 'metadata' | 'result'>[];
+  error?: string;
+}
+
 export interface XanderMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -714,6 +783,121 @@ Session: ${request.sessionId}`;
   clearHistory(): void {
     this.conversationHistory = [];
     console.log('[XanderApi] Conversation history cleared');
+  }
+
+  // ====================
+  // MCP Dispatch Methods
+  // ====================
+
+  /**
+   * Dispatch a task to silas-workstation via MCP dispatch_task tool
+   *
+   * @param request - Task dispatch request with type, description, priority, etc.
+   * @returns Response with task ID and status, or error if unavailable
+   */
+  async mcpDispatchTask(request: McpDispatchTaskRequest): Promise<McpDispatchTaskResponse> {
+    try {
+      const payload = {
+        type: request.type,
+        description: request.description,
+        priority: request.priority ?? 'normal',
+        context: request.context,
+        metadata: request.metadata,
+      };
+
+      const response = await this.client.post<McpDispatchTaskResponse>(
+        '/mcp/dispatch_task',
+        payload
+      );
+
+      console.log('[XanderApi] MCP dispatch_task successful:', response.data.taskId);
+      return response.data;
+    } catch (error) {
+      const apiError = error as XanderApiError;
+      console.error('[XanderApi] MCP dispatch_task failed:', apiError);
+      
+      // Return graceful error response instead of throwing
+      return {
+        success: false,
+        error: this.formatMcpError(apiError),
+      };
+    }
+  }
+
+  /**
+   * Get the status of a task by ID via MCP task_status tool
+   *
+   * @param taskId - The unique task ID to get status for
+   * @returns Task status response with full task details
+   */
+  async mcpTaskStatus(taskId: string): Promise<McpTaskStatusResponse> {
+    try {
+      const response = await this.client.post<McpTaskStatusResponse>(
+        '/mcp/task_status',
+        { taskId }
+      );
+
+      console.log('[XanderApi] MCP task_status successful:', taskId);
+      return response.data;
+    } catch (error) {
+      const apiError = error as XanderApiError;
+      console.error('[XanderApi] MCP task_status failed:', apiError);
+      
+      return {
+        success: false,
+        error: this.formatMcpError(apiError),
+      };
+    }
+  }
+
+  /**
+   * List tasks from silas-workstation via MCP list_tasks tool
+   *
+   * @param filters - Optional filters for status, type, priority, and pagination
+   * @returns List of tasks with stats
+   */
+  async mcpListTasks(filters?: McpListTasksRequest): Promise<McpListTasksResponse> {
+    try {
+      const payload = {
+        status: filters?.status,
+        type: filters?.type,
+        priority: filters?.priority,
+        limit: filters?.limit ?? 20,
+        offset: filters?.offset ?? 0,
+      };
+
+      const response = await this.client.post<McpListTasksResponse>(
+        '/mcp/list_tasks',
+        payload
+      );
+
+      console.log('[XanderApi] MCP list_tasks successful, count:', response.data.count);
+      return response.data;
+    } catch (error) {
+      const apiError = error as XanderApiError;
+      console.error('[XanderApi] MCP list_tasks failed:', apiError);
+      
+      return {
+        success: false,
+        error: this.formatMcpError(apiError),
+      };
+    }
+  }
+
+  /**
+   * Format MCP error into user-friendly message
+   */
+  private formatMcpError(error: XanderApiError): string {
+    if (error.code === 'ECONNREFUSED' || error.code === 'CONNECTION_REFUSED') {
+      return 'silas-workstation is unavailable. Please ensure it is running.';
+    }
+    if (error.code === 'ETIMEDOUT' || error.code === 'TIMEOUT') {
+      return 'silas-workstation is unavailable. Request timed out.';
+    }
+    if (error.code === 'ENETUNREACH' || error.code === 'NETWORK_ERROR') {
+      return 'silas-workstation is unavailable. Network unreachable.';
+    }
+    return error.message || 'An unexpected error occurred';
   }
 }
 
