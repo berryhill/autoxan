@@ -134,6 +134,10 @@ jest.mock('react-native', () => {
     StyleSheet: {
       create: (styles: Record<string, unknown>) => styles,
     },
+    Vibration: {
+      vibrate: jest.fn(),
+      cancel: jest.fn(),
+    },
     NativeModules: {
       AudioFocusManager: mockAudioFocusManager,
     },
