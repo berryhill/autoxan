@@ -53,13 +53,19 @@ agent:
 # MCP Servers Configuration
 # For dispatch to Silas workstation agent
 mcp_servers:
-  # Silas dispatch server (configure when Silas MCP is available)
-  # silas:
-  #   url: "http://workstation-ip:3000"  # Replace with actual Silas endpoint
-  #   tools:
-  #     include: [dispatch_task, check_task_status, list_pending_tasks]
-  #     prompts: false
-  #     resources: false
+  # Silas dispatch server for task execution on workstation
+  silas:
+    # Environment variable for workstation URL (configure in .env)
+    url: "${SILAS_MCP_URL}"
+    tools:
+      include:
+        - dispatch_task
+        - task_status
+        - list_tasks
+        - cancel_task
+        - queue_stats
+      prompts: false
+      resources: false
   
   # Example: GitHub integration for light research
   # github:

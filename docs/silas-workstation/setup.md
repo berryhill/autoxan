@@ -142,24 +142,36 @@ Future versions may support:
 
 ### Connecting to Xander (Hermes)
 
-Silas Workstation uses stdio transport by default. To connect from Hermes:
+Silas Workstation provides an HTTP-based MCP server. To connect from Hermes:
 
-1. **Configure Hermes MCP** in `/hermes/config.yaml`:
+1. **Configure Hermes MCP** in `~/.hermes/config.yaml` (already enabled by default):
 
 ```yaml
-mcp:
-  servers:
-    silas:
-      command: "node"
-      args: 
-        - "/path/to/silas-workstation/dist/index.js"
+mcp_servers:
+  silas:
+    url: "${SILAS_MCP_URL}"
+    tools:
+      include:
+        - dispatch_task
+        - task_status
+        - list_tasks
+        - cancel_task
+        - queue_stats
+      prompts: false
+      resources: false
 ```
 
-2. **Test the connection** by sending a task from Xander.
+2. **Set the SILAS_MCP_URL** in `~/.hermes/.env`:
+
+```bash
+SILAS_MCP_URL=http://192.168.1.100:3000
+```
+
+3. **Test the connection** by sending a task from Xander.
 
 ### Testing MCP Tools Manually
 
-You can test the MCP server manually using the MCP CLI or by sending JSON-RPC messages via stdin.
+You can test the MCP server manually using the MCP CLI or by sending JSON-RPC messages.
 
 Example dispatch_task request:
 ```json
@@ -177,6 +189,155 @@ Example dispatch_task request:
   }
 }
 ```
+
+## Network Configuration
+
+To enable Hermes (running on your phone) to communicate with Silas Workstation, you need to configure network connectivity.
+
+### Finding Your Workstation IP Address
+
+**Linux:**
+```bash
+# Using ip command
+ip addr show | grep "inet "
+
+# Or using hostname
+hostname -I
+```
+
+**macOS:**
+```bash
+# Show network interfaces
+ifconfig | grep "inet "
+
+# Or use system preferences
+networksetup -getinfo Wi-Fi
+```
+
+**Windows:**
+```powershell
+# Using PowerShell
+Get-NetIPAddress -AddressFamily IPv4 | Select IPAddress
+```
+
+Look for an IP address like `192.168.1.x` or `10.0.0.x` for local network.
+
+### Local Network Setup
+
+For phone and workstation on the **same network** (home WiFi):
+
+1. **Find workstation IP** using commands above
+2. **Configure firewall** to allow port 3000:
+
+   **Linux (ufw):**
+   ```bash
+   sudo ufw allow 3000/tcp
+   sudo ufw reload
+   ```
+
+   **Linux (firewalld):**
+   ```bash
+   sudo firewall-cmd --add-port=3000/tcp --permanent
+   sudo firewall-cmd --reload
+   ```
+
+   **macOS:**
+   ```bash
+   # Open System Preferences > Security & Privacy > Firewall
+   # Add exception for port 3000 or disable during development
+   ```
+
+3. **Set SILAS_MCP_URL** in `~/.hermes/.env`:
+   ```bash
+   SILAS_MCP_URL=http://192.168.1.100:3000
+   ```
+
+4. **Verify connectivity** from phone terminal (Termux):
+   ```bash
+   curl http://192.168.1.100:3000/health
+   ```
+
+### Tailscale Setup (Recommended for Remote Access)
+
+[Tailscale](https://tailscale.com/) provides secure, zero-config networking. This is the recommended approach for:
+- Remote access from outside your home network
+- Avoiding firewall/port forwarding complexity
+- Secure encrypted connection
+
+**Step 1: Install Tailscale on Workstation**
+
+**Linux:**
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+```
+
+**macOS:**
+```bash
+brew install --cask tailscale
+# Or download from https://tailscale.com/download
+```
+
+**Step 2: Install Tailscale on Android**
+
+1. Install Tailscale from Google Play Store
+2. Sign in with same account as workstation
+3. Enable VPN when prompted
+
+**Step 3: Get Tailscale IP**
+
+On your workstation:
+```bash
+tailscale ip -4
+# Example output: 100.64.123.45
+```
+
+Or check the Tailscale admin console at [login.tailscale.com](https://login.tailscale.com).
+
+**Step 4: Configure Hermes**
+
+Update `~/.hermes/.env` with Tailscale IP:
+```bash
+SILAS_MCP_URL=http://100.64.123.45:3000
+```
+
+**Step 5: Verify Connection**
+
+From phone (with Tailscale connected):
+```bash
+curl http://100.64.123.45:3000/health
+```
+
+### Verifying Connectivity
+
+Test the connection from your phone (Termux):
+
+```bash
+# Test basic connectivity
+ping -c 3 <WORKSTATION_IP>
+
+# Test HTTP endpoint
+curl -v http://<WORKSTATION_IP>:3000/health
+
+# Test MCP tool (if server is running)
+curl -X POST http://<WORKSTATION_IP>:3000 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+**Expected responses:**
+- Ping: 3 successful replies
+- Health check: `{"status":"ok"}` or similar
+- Tools list: JSON-RPC response with available tools
+
+### Common Network Issues
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| Connection refused | Firewall blocking | Open port 3000 |
+| No route to host | Different networks | Use Tailscale |
+| Timeout | IP address wrong | Verify workstation IP |
+| Name resolution fail | Using hostname instead of IP | Use IP address directly |
 
 ## Project Scripts
 

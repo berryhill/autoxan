@@ -99,24 +99,40 @@ cp ~/autoxan/hermes/SOUL.md ~/.hermes/SOUL.md
 cp ~/autoxan/hermes/config.yaml ~/.hermes/config.yaml
 ```
 
-### Step 6: Configure API Keys
+### Step 6: Configure Environment Variables
 
-Create the environment file:
+Copy the environment template and configure your settings:
+
+```bash
+# Copy the template
+cp ~/autoxan/hermes/.env.example ~/.hermes/.env
+
+# Edit with your values
+nano ~/.hermes/.env
+```
+
+Or create manually:
 
 ```bash
 cat > ~/.hermes/.env << 'EOF'
-# OpenRouter API key (recommended)
+# Required: LLM Provider (choose one)
 OPENROUTER_API_KEY=sk-or-your-key-here
-
-# OR use Anthropic directly
 # ANTHROPIC_API_KEY=sk-ant-your-key-here
+
+# Silas Workstation MCP Server
+# Replace with your workstation's actual IP address
+# Local network: http://192.168.1.100:3000
+# Tailscale: http://100.x.x.x:3000
+SILAS_MCP_URL=http://192.168.1.100:3000
 
 # Optional: GitHub token for code search
 # GITHUB_TOKEN=ghp_your-token-here
 EOF
 ```
 
-**Important:** Replace `sk-or-your-key-here` with your actual API key.
+**Important:**
+- Replace `sk-or-your-key-here` with your actual OpenRouter or Anthropic API key
+- Replace the `SILAS_MCP_URL` with your workstation's IP address (see [Network Configuration](../silas-workstation/setup.md#network-configuration))
 
 ### Step 7: Verify Installation
 
@@ -318,8 +334,18 @@ After setup, your Hermes configuration should look like:
 ~/.hermes/
 ├── config.yaml     # Hermes settings
 ├── SOUL.md         # Xander personality
-├── .env            # API keys (not in git)
+├── .env            # API keys and SILAS_MCP_URL (not in git)
 └── memory/         # Persistent memory (auto-created)
+```
+
+The Autoxan repository provides templates:
+
+```
+~/autoxan/hermes/
+├── config.yaml     # Configuration template
+├── SOUL.md         # Xander personality definition
+├── .env.example    # Environment variable template
+└── README.md       # Quick start guide
 ```
 
 ## Related Documentation
