@@ -15,7 +15,7 @@ The E2E testing strategy employs a dual-mode approach:
 │  │                Unit Test Mode (Default)                      ││
 │  │  - Mocked axios responses                                    ││
 │  │  - Runs in CI/CD (no network required)                       ││
-│  │  - 164 tests covering all scenarios                          ││
+│  │  - 189 tests covering all scenarios                          ││
 │  └─────────────────────────────────────────────────────────────┘│
 │  ┌─────────────────────────────────────────────────────────────┐│
 │  │              Integration Test Mode                           ││
@@ -36,6 +36,7 @@ mobile/tests/e2e/
 ├── gestures.test.ts      # All 5 gesture control tests (40 tests)
 ├── audioFocus.test.ts    # Audio focus management tests (28 tests)
 ├── errors.test.ts        # Error scenario tests (47 tests)
+├── mcpDispatch.test.ts   # MCP dispatch integration tests (20 tests)
 └── run-e2e.sh            # Automated test runner script
 ```
 
@@ -48,7 +49,8 @@ mobile/tests/e2e/
 | Gesture Controls | 40 | 0 | 40 |
 | Audio Focus | 28 | 6 | 34 |
 | Error Scenarios | 47 | 0 | 47 |
-| **Total** | **155** | **9** | **164** |
+| MCP Dispatch | 20 | 3 | 23 |
+| **Total** | **175** | **14** | **189** |
 
 ## Running E2E Tests
 
@@ -94,6 +96,7 @@ chmod +x mobile/tests/e2e/run-e2e.sh
 ./run-e2e.sh gestures
 ./run-e2e.sh audioFocus
 ./run-e2e.sh errors
+./run-e2e.sh mcpDispatch
 
 # Combined options
 ./run-e2e.sh -i dispatch    # Integration test dispatch only
@@ -382,6 +385,75 @@ Located in `errors.test.ts`, these tests cover:
 | Preserve conversation | Preserves conversation after transient error |
 | Local session fallback | Continues with local session |
 | silas-workstation unavailable | Allows conversation to continue |
+
+### 6. MCP Dispatch Tests (20 tests)
+
+Located in `mcpDispatch.test.ts`, these tests cover MCP (Model Context Protocol) tool integration with the silas-workstation:
+
+#### Test Categories
+
+| Category | Tests | Description |
+|----------|-------|-------------|
+| `dispatch_task` | 4 | Test dispatching tasks via MCP tool |
+| `task_status` | 4 | Test retrieving task status by ID |
+| `list_tasks` | 6 | Test listing tasks with filters |
+| Error Handling | 6 | Test graceful error handling |
+
+#### dispatch_task MCP Tool (4 tests)
+
+| Test | Description |
+|------|-------------|
+| Successfully dispatches task | Calls MCP tool and returns task ID |
+| Validates required parameters | Ensures description and priority are provided |
+| Handles optional parameters | Tests session_id and metadata fields |
+| Returns structured response | Validates response contains task_id and status |
+
+#### task_status MCP Tool (4 tests)
+
+| Test | Description |
+|------|-------------|
+| Retrieves task status | Gets status by task ID |
+| Returns complete task info | Includes status, result, created_at, etc. |
+| Handles non-existent task | Returns appropriate error for unknown ID |
+| Tracks status transitions | Verifies pending → running → completed flow |
+
+#### list_tasks MCP Tool (6 tests)
+
+| Test | Description |
+|------|-------------|
+| Lists all tasks | Returns all tasks without filters |
+| Filters by status | Filters tasks by pending, running, completed, failed |
+| Filters by session | Returns tasks for specific session_id |
+| Supports pagination | Handles limit and offset parameters |
+| Combines filters | Applies multiple filter criteria |
+| Returns empty list | Handles case with no matching tasks |
+
+#### MCP Error Handling (6 tests)
+
+| Test | Description |
+|------|-------------|
+| Invalid tool name | Returns error for unknown MCP tool |
+| Missing required params | Returns error when required fields missing |
+| Connection failure | Handles silas-workstation unavailable |
+| Timeout handling | Handles request timeout gracefully |
+| Malformed response | Handles invalid JSON response |
+| Server error | Handles 5xx server errors |
+
+#### Real Integration Tests (3 skipped)
+
+These tests require `HERMES_INTEGRATION_TEST=true` and a running silas-workstation:
+
+| Test | Description |
+|------|-------------|
+| Full dispatch flow | Creates task, checks status, verifies completion |
+| Task lifecycle | Tests complete pending → running → completed flow |
+| Error recovery | Tests retry behavior on transient failures |
+
+To run MCP integration tests:
+
+```bash
+HERMES_INTEGRATION_TEST=true ./run-e2e.sh mcpDispatch
+```
 
 ## Mock Response Fixtures
 
