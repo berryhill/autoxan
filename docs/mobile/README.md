@@ -21,7 +21,7 @@ See the [Hermes Documentation](../hermes/README.md) for complete backend details
 
 ## Features
 
-### Current (Phase 5)
+### Current (Phase 10)
 
 - ✅ Basic voice interface UI with VoiceButton component
 - ✅ **Speech-to-Text (STT)** - Full implementation using `expo-speech-recognition`
@@ -52,13 +52,24 @@ See the [Hermes Documentation](../hermes/README.md) for complete backend details
   - Resumes other audio when conversation ends
   - Platform-aware (Android-only, no-op on iOS)
   - Event callbacks: onFocusGained, onFocusLost, onDuck
+- ✅ **Gesture Controls** (Phase 10)
+  - 5-button control system for hands-free conversation management
+  - **Interrupt** (🤚): Stop Xander mid-speech, return to listening
+  - **Steer** (🎯): Let me clarify - guide the conversation
+  - **Queue** (📋): Save this for later - dispatch to silas-workstation
+  - **Stop** (⏹️): End session gracefully
+  - **Repeat** (🔄): Say that again - replay last response
+  - Haptic feedback on button press (50ms vibration)
+  - Visual feedback with animated scale effects
+  - Full accessibility support (labels and hints)
+  - State-aware button enabling/disabling
 - ✅ Android permissions configured (RECORD_AUDIO, MODIFY_AUDIO_SETTINGS)
 - ✅ **Unit testing infrastructure** with Jest and React Native Testing Library
   - 234+ unit tests covering all hooks, API, and store
 
 ### Planned
 
-- ⏳ Gesture controls for conversation control (Phase 6+)
+- ⏳ Advanced conversation features (Phase 11+)
 
 ## Quick Start
 
@@ -104,12 +115,20 @@ mobile/
 │           └── AudioFocusPackage.kt # React package registration
 └── src/
     ├── components/
+    │   ├── GestureButton.tsx        # Animated gesture button component
+    │   ├── ControlsPanel.tsx        # Gesture controls container (5 buttons)
+    │   ├── index.ts                 # Barrel export
     │   └── ui/
     │       └── VoiceButton.tsx      # Voice button component
     ├── hooks/
     │   ├── useVoice.ts              # Speech-to-Text hook
     │   ├── useSpeech.ts             # Text-to-Speech hook
-    │   └── useAudioFocus.ts         # Audio focus management hook
+    │   ├── useAudioFocus.ts         # Audio focus management hook
+    │   ├── useGestures.ts           # Gesture handler hook
+    │   └── index.ts                 # Barrel export
+    ├── types/
+    │   ├── gestures.ts              # Gesture type definitions & GESTURE_CONFIGS
+    │   └── index.ts                 # Barrel export
     ├── api/
     │   └── xanderApi.ts             # Hermes HTTP client (OpenRouter-compatible)
     ├── store/
@@ -191,4 +210,4 @@ npx eas build --platform android
 
 ---
 
-*Last updated: Hermes Migration Complete - Issue #26*
+*Last updated: Phase 10 Gesture Controls - Issue #11*

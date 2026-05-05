@@ -11,14 +11,15 @@ The Xander Voice App is built with React Native (Expo) and follows a modular arc
 │                         App.tsx                                  │
 │                    (Main Entry Point)                           │
 │                                                                  │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │ Components  │  │   Hooks     │  │    Store (Zustand)      │  │
-│  │             │  │             │  │                         │  │
-│  │ VoiceButton │  │ useVoice    │  │ sessionStore            │  │
-│  │             │  │ useSpeech   │  │ • sessionState          │  │
-│  │             │  │ useAudioFocus│ │ • messages              │  │
-│  └─────────────┘  └─────────────┘  │ • dispatchedWork        │  │
-│                                     └─────────────────────────┘  │
+│  ┌─────────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │   Components    │  │    Hooks    │  │  Store (Zustand)    │  │
+│  │                 │  │             │  │                     │  │
+│  │ VoiceButton     │  │ useVoice    │  │ sessionStore        │  │
+│  │ GestureButton   │  │ useSpeech   │  │ • sessionState      │  │
+│  │ ControlsPanel   │  │ useAudioFocus│ │ • messages          │  │
+│  │                 │  │ useGestures │  │ • dispatchedWork    │  │
+│  └─────────────────┘  └─────────────┘  └─────────────────────┘  │
+│                                                                  │
 │  ┌─────────────────────────────┐  ┌─────────────────────────┐    │
 │  │         API Layer           │  │    Native Modules        │    │
 │  │                             │  │                         │    │
@@ -28,6 +29,13 @@ The Xander Voice App is built with React Native (Expo) and follows a modular arc
 │  │ • dispatch()               │  │ • hasFocus()            │    │
 │  │ • healthCheck()            │  │                         │    │
 │  └─────────────────────────────┘  └─────────────────────────┘    │
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │                      Types                               │    │
+│  │                                                          │    │
+│  │ gestures.ts                                              │    │
+│  │ • GestureAction, GestureConfig, GESTURE_CONFIGS          │    │
+│  └─────────────────────────────────────────────────────────┘    │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -62,6 +70,8 @@ mobile/
     │       └── xanderApi.test.ts    # XanderApi tests
     ├── components/                  # React components
     │   ├── index.ts                 # Barrel export
+    │   ├── GestureButton.tsx        # Animated gesture button component
+    │   ├── ControlsPanel.tsx        # Gesture controls container (5 buttons)
     │   └── ui/                      # UI components
     │       ├── index.ts             # Barrel export
     │       └── VoiceButton.tsx      # Voice button component
@@ -70,6 +80,7 @@ mobile/
     │   ├── useVoice.ts              # Speech-to-Text hook
     │   ├── useSpeech.ts             # Text-to-Speech hook
     │   ├── useAudioFocus.ts         # Audio focus management hook
+    │   ├── useGestures.ts           # Gesture control handler hook
     │   └── __tests__/               # Hook unit tests
     │       ├── useVoice.test.ts     # STT hook tests
     │       ├── useSpeech.test.ts    # TTS hook tests
@@ -80,6 +91,9 @@ mobile/
     │   ├── sessionStore.ts          # Zustand session store
     │   └── __tests__/               # Store unit tests
     │       └── sessionStore.test.ts # Session store tests (158 tests)
+    ├── types/                       # Type definitions
+    │   ├── index.ts                 # Barrel export
+    │   └── gestures.ts              # Gesture types & GESTURE_CONFIGS
     └── utils/                       # Utility functions
         ├── index.ts                 # Barrel export
         └── audioFocus.ts            # Audio focus utilities (legacy)
@@ -190,6 +204,123 @@ import { VoiceButton } from '@/components/ui';
   onPress={handleVoiceButtonPress}
 />
 ```
+
+---
+
+#### GestureButton (`src/components/GestureButton.tsx`)
+
+Individual animated gesture control button component.
+
+**Purpose:**
+- Render a single gesture button with visual feedback
+- Animated scale effect on press
+- Configurable size and appearance from GestureConfig
+- Full accessibility support (labels and hints)
+
+**Props:**
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `config` | `GestureConfig` | required | Configuration for the gesture (icon, label, color, description) |
+| `onPress` | `() => void` | required | Callback when button is pressed |
+| `disabled` | `boolean` | `false` | Whether the button is disabled |
+| `size` | `GestureButtonSize` | `'medium'` | Button size: `'small'`, `'medium'`, or `'large'` |
+| `testID` | `string` | `undefined` | Optional test ID for testing |
+
+**Button Sizes:**
+| Size | Width | Height | Font Size |
+|------|-------|--------|-----------|
+| `small` | 60px | 60px | 24px |
+| `medium` | 80px | 80px | 32px |
+| `large` | 100px | 100px | 40px |
+
+**Animation:**
+- Uses `Animated.spring` for smooth scale animations
+- Scales down to 0.9 on press, springs back to 1.0 on release
+- Uses native driver for optimal performance
+
+**Accessibility:**
+- `accessibilityLabel`: Button label (e.g., "Interrupt")
+- `accessibilityHint`: Button description (e.g., "Stop and let me speak")
+- `accessibilityRole`: "button"
+- `accessibilityState`: Includes disabled state
+
+**Usage:**
+```tsx
+import { GestureButton } from '@/components';
+import { GESTURE_CONFIGS } from '@/types/gestures';
+
+<GestureButton
+  config={GESTURE_CONFIGS.interrupt}
+  onPress={() => handleGesture('interrupt')}
+  disabled={!isGestureEnabled('interrupt')}
+  size="medium"
+/>
+```
+
+**Status:** ✅ Complete (Phase 10)
+
+---
+
+#### ControlsPanel (`src/components/ControlsPanel.tsx`)
+
+Container component for all 5 gesture control buttons.
+
+**Purpose:**
+- Layout and render all 5 gesture buttons
+- Automatic button state management based on session state
+- Integration with useGestures hook for gesture handling
+
+**Layout:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐        │
+│  │   🤚    │  │   🎯    │  │   📋    │  │   ⏹️    │        │
+│  │Interrupt│  │  Steer  │  │  Queue  │  │  Stop   │        │
+│  └─────────┘  └─────────┘  └─────────┘  └─────────┘        │
+│                                                              │
+│                      ┌───────────┐                          │
+│                      │    🔄     │                          │
+│                      │  Repeat   │                          │
+│                      └───────────┘                          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Props:**
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `testIDPrefix` | `string` | `'gesture-controls'` | Test ID prefix for testing |
+
+**Button Arrangement:**
+- **Top row (4 buttons, medium size):** Interrupt, Steer, Queue, Stop
+- **Bottom row (1 button, large size):** Repeat (centered)
+
+**State Awareness:**
+The panel automatically disables buttons based on the current session state:
+
+| Gesture | Enabled States |
+|---------|----------------|
+| `interrupt` | Only when `speaking` |
+| `steer` | When `listening`, `processing`, or `speaking` |
+| `queue` | When `listening`, `processing`, or `speaking` |
+| `stop` | When `listening`, `processing`, or `speaking` |
+| `repeat` | When `listening`, `processing`, or `speaking` |
+
+**Usage:**
+```tsx
+import { ControlsPanel } from '@/components';
+
+// In your main conversation view:
+function ConversationScreen() {
+  return (
+    <View style={styles.container}>
+      {/* Other UI elements */}
+      <ControlsPanel />
+    </View>
+  );
+}
+```
+
+**Status:** ✅ Complete (Phase 10)
 
 ---
 
@@ -585,6 +716,113 @@ function App() {
 ```
 
 **Status:** ✅ Complete (Phase 5)
+
+---
+
+#### useGestures (`src/hooks/useGestures.ts`)
+
+Custom hook for handling gesture control actions. Provides handlers for all 5 gesture buttons with proper state management and integration.
+
+**Purpose:**
+- Handle all 5 gesture actions (interrupt, steer, queue, stop, repeat)
+- Provide haptic feedback on gesture activation
+- Integration with state machine, TTS, STT, and API
+- State-aware gesture availability
+
+**Return Type:**
+```typescript
+interface UseGesturesResult {
+  /** Handle a gesture action */
+  handleGesture: (action: GestureAction) => Promise<void>;
+  /** Check if a gesture is enabled for the current state */
+  isGestureEnabled: (action: GestureAction) => boolean;
+}
+```
+
+**Gesture Actions:**
+
+| Gesture | Action | Description |
+|---------|--------|-------------|
+| `interrupt` | Stop TTS and return to listening | Stops Xander mid-speech so user can speak |
+| `steer` | Prompt for clarification | Allows user to redirect the conversation |
+| `queue` | Dispatch to silas-workstation | Saves current context for later processing |
+| `stop` | End session gracefully | Says goodbye and ends the conversation |
+| `repeat` | Replay last assistant message | Re-speaks the last Xander response |
+
+**Gesture Availability by State:**
+
+| Gesture | idle | connecting | listening | processing | speaking | error | ended |
+|---------|------|------------|-----------|------------|----------|-------|-------|
+| `interrupt` | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| `steer` | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| `queue` | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| `stop` | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| `repeat` | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
+
+**Haptic Feedback:**
+- 50ms vibration on every gesture activation
+- Uses React Native `Vibration.vibrate()` API
+
+**Debouncing:**
+- Prevents multiple rapid gesture activations
+- Uses a ref to track processing state
+
+**Gesture Handler Implementations:**
+
+| Handler | Actions Performed |
+|---------|-------------------|
+| `handleInterrupt` | Stop TTS → Transition to listening → Start STT |
+| `handleSteer` | Stop TTS → Add steering message → Transition to listening → Speak prompt → Start STT |
+| `handleQueue` | Get last messages → Dispatch to silas-workstation → Track in store → Speak confirmation |
+| `handleStop` | Stop TTS → Stop STT → Speak goodbye → End API session → End local session |
+| `handleRepeat` | Find last assistant message → Stop current TTS → Transition to speaking → Speak message → Return to listening |
+
+**Usage:**
+```tsx
+import { useGestures } from '@/hooks';
+
+function CustomControls() {
+  const { handleGesture, isGestureEnabled } = useGestures();
+
+  return (
+    <View>
+      <Button
+        title="Interrupt"
+        onPress={() => handleGesture('interrupt')}
+        disabled={!isGestureEnabled('interrupt')}
+      />
+      <Button
+        title="Stop"
+        onPress={() => handleGesture('stop')}
+        disabled={!isGestureEnabled('stop')}
+      />
+    </View>
+  );
+}
+```
+
+**Integration with ControlsPanel:**
+```tsx
+import { ControlsPanel } from '@/components';
+
+// ControlsPanel automatically uses useGestures internally
+function ConversationScreen() {
+  return (
+    <View>
+      {/* Other UI */}
+      <ControlsPanel />
+    </View>
+  );
+}
+```
+
+**Dependencies:**
+- `useSessionStore` - For state and transitions
+- `useSpeech` - For TTS (speak, stop)
+- `useVoice` - For STT (startListening, stopListening)
+- `xanderApi` - For dispatch and session management
+
+**Status:** ✅ Complete (Phase 10)
 
 ---
 
@@ -1179,6 +1417,126 @@ function ConversationManager() {
 
 ---
 
+### Types
+
+Type definitions for gesture controls and related functionality.
+
+#### gestures.ts (`src/types/gestures.ts`)
+
+Type definitions and configuration for the 5-button gesture control system.
+
+**Purpose:**
+- Define all gesture action types
+- Define gesture configuration interface
+- Provide gesture configuration constants (GESTURE_CONFIGS)
+- Button size presets and utilities
+
+**GestureAction Type:**
+```typescript
+type GestureAction =
+  | 'interrupt'  // Stop Xander, return to listening
+  | 'steer'      // Insert clarification
+  | 'queue'      // Queue current topic for dispatch
+  | 'stop'       // End session
+  | 'repeat';    // Repeat last response
+```
+
+**GestureConfig Interface:**
+```typescript
+interface GestureConfig {
+  /** The action this gesture performs */
+  action: GestureAction;
+  /** Emoji icon for the button */
+  icon: string;
+  /** Short label for the button */
+  label: string;
+  /** Longer description for accessibility */
+  description: string;
+  /** Button background color */
+  color: string;
+}
+```
+
+**GestureButtonSize Type:**
+```typescript
+type GestureButtonSize = 'small' | 'medium' | 'large';
+
+interface GestureButtonSizeConfig {
+  width: number;
+  height: number;
+  fontSize: number;
+}
+```
+
+**GESTURE_CONFIGS Constant:**
+
+| Action | Icon | Label | Description | Color |
+|--------|------|-------|-------------|-------|
+| `interrupt` | 🤚 | Interrupt | Stop and let me speak | `#FF6B6B` (Red) |
+| `steer` | 🎯 | Steer | Let me clarify something | `#4ECDC4` (Teal) |
+| `queue` | 📋 | Queue | Save this for silas-workstation | `#45B7D1` (Blue) |
+| `stop` | ⏹️ | Stop | End conversation | `#96CEB4` (Green) |
+| `repeat` | 🔄 | Repeat | Say that again | `#DDA0DD` (Purple) |
+
+**Color Design:**
+- **Red (Interrupt)**: Stop action, urgent
+- **Teal (Steer)**: Guidance/direction
+- **Blue (Queue)**: Task/action
+- **Green (Stop)**: Calm, session end
+- **Purple (Repeat)**: Playback/refresh
+
+**Button Size Presets:**
+```typescript
+const GESTURE_BUTTON_SIZES: Record<GestureButtonSize, GestureButtonSizeConfig> = {
+  small:  { width: 60,  height: 60,  fontSize: 24 },
+  medium: { width: 80,  height: 80,  fontSize: 32 },
+  large:  { width: 100, height: 100, fontSize: 40 },
+};
+```
+
+**Utility Functions:**
+| Function | Returns | Description |
+|----------|---------|-------------|
+| `getGestureConfig(action)` | `GestureConfig` | Get config for a specific action |
+| `getGestureActions()` | `GestureAction[]` | Get all actions in display order |
+| `getTopRowGestures()` | `GestureAction[]` | Get top row actions (4 buttons) |
+| `getBottomRowGestures()` | `GestureAction[]` | Get bottom row actions (repeat only) |
+
+**Usage:**
+```typescript
+import {
+  GestureAction,
+  GestureConfig,
+  GestureButtonSize,
+  GESTURE_CONFIGS,
+  GESTURE_BUTTON_SIZES,
+  getGestureConfig,
+  getGestureActions,
+  getTopRowGestures,
+  getBottomRowGestures,
+} from '@/types/gestures';
+
+// Get config for a specific gesture
+const interruptConfig = getGestureConfig('interrupt');
+console.log(interruptConfig.icon); // '🤚'
+
+// Get all gestures for rendering
+const allGestures = getGestureActions();
+// ['interrupt', 'steer', 'queue', 'stop', 'repeat']
+
+// Get gestures by row
+const topRow = getTopRowGestures();     // ['interrupt', 'steer', 'queue', 'stop']
+const bottomRow = getBottomRowGestures(); // ['repeat']
+
+// Access config directly
+const config = GESTURE_CONFIGS.queue;
+console.log(config.color); // '#45B7D1'
+```
+
+**Status:** ✅ Complete (Phase 10)
+
+---
+
 ### Native Modules
 
 Native modules provide platform-specific functionality that cannot be achieved with JavaScript alone. These modules are written in Kotlin (Android) and integrated with React Native.
@@ -1386,11 +1744,22 @@ Each directory has an `index.ts` that re-exports its contents:
 export { useVoice } from './useVoice';
 export { useSpeech } from './useSpeech';
 export { useAudioFocus } from './useAudioFocus';
+export { useGestures } from './useGestures';
+
+// src/components/index.ts
+export * from './ui';
+export { GestureButton } from './GestureButton';
+export { ControlsPanel } from './ControlsPanel';
+
+// src/types/index.ts
+export * from './gestures';
 ```
 
 This enables clean imports:
 ```typescript
-import { useVoice, useSpeech, useAudioFocus } from '@/hooks';
+import { useVoice, useSpeech, useAudioFocus, useGestures } from '@/hooks';
+import { VoiceButton, GestureButton, ControlsPanel } from '@/components';
+import { GestureAction, GESTURE_CONFIGS } from '@/types';
 ```
 
 ### Custom Hooks
@@ -1399,6 +1768,7 @@ Encapsulate complex logic in custom hooks:
 - `useVoice` - Voice recognition logic
 - `useSpeech` - Speech synthesis logic
 - `useAudioFocus` - Android audio focus management
+- `useGestures` - Gesture control handler
 
 ### Zustand for State
 
@@ -1488,4 +1858,4 @@ export const useNewStore = create<NewStoreState>((set) => ({
 
 ---
 
-*Last updated: Hermes Integration - Updated XanderApi to use Hermes agent (port 8080) with OpenRouter-compatible chat completions, dispatch block parsing, conversation history management, and new methods (getConversationHistory, sendChatCompletion, clearHistory)*
+*Last updated: Phase 10 Gesture Controls - Added GestureButton component, ControlsPanel container, useGestures hook, and gesture types (Issue #11)*
