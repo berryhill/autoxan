@@ -263,7 +263,7 @@ For persistent operation, create a Termux service:
 cat > ~/start-hermes.sh << 'EOF'
 #!/bin/bash
 cd ~
-hermes serve --port 3000
+hermes serve --port 8080
 EOF
 
 chmod +x ~/start-hermes.sh
@@ -303,7 +303,7 @@ Once Hermes is running, the React Native mobile app communicates via HTTP:
 ```
 Mobile App (React Native)
     │
-    │ HTTP (localhost:3000)
+    │ HTTP (localhost:8080)
     ▼
 Hermes Agent (Termux)
 ```
