@@ -218,11 +218,12 @@ hermes chat "Create a Python script to analyze my git commit history"
 
 ## Related Components
 
+- **[Architecture](./architecture.md)** - Technical architecture and data flow diagrams
 - **[Configuration Reference](./configuration.md)** - Detailed config.yaml documentation
 - **[Setup Guide](./setup.md)** - Termux installation instructions
 - **[Testing Guide](./testing.md)** - Integration testing documentation
 - **[Mobile App](../mobile/README.md)** - React Native voice UI
-- **[Architecture Overhaul Plan](../../plans/hermes-architecture-overhaul.md)** - Migration context
+- **[Mobile Architecture](../mobile/architecture.md)** - Mobile app technical details
 
 ## Quick Links
 

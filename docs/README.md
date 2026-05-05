@@ -25,8 +25,10 @@ autoxan/
 │   │   └── architecture.md    # Architecture documentation
 │   └── hermes/                # Hermes Agent documentation
 │       ├── README.md          # Hermes overview in Autoxan
+│       ├── architecture.md    # Technical architecture & data flow
 │       ├── configuration.md   # Configuration reference
-│       └── setup.md           # Termux setup guide
+│       ├── setup.md           # Termux setup guide
+│       └── testing.md         # Integration testing guide
 ├── hermes/                    # Hermes Agent configuration for Xander
 │   ├── config.yaml            # Hermes settings (model, memory, MCP)
 │   ├── SOUL.md                # Xander personality & system prompt
@@ -34,7 +36,7 @@ autoxan/
 ├── mobile/                    # Xander Voice App (React Native/Expo)
 └── plans/                     # Project plans and specifications
     ├── xander-voice-app-plan.md        # Detailed project plan
-    ├── hermes-architecture-overhaul.md # Migration to Hermes
+    ├── hermes-architecture-overhaul.md # Migration to Hermes (historical)
     └── gesture-ring-plan.md            # Future gesture control plans
 ```
 
@@ -82,8 +84,10 @@ The project uses **Hermes Agent** as the AI backend for the Xander conversationa
 ### Hermes Agent (Xander Backend)
 
 - **[Hermes Overview](./hermes/README.md)** - Introduction to Hermes in Autoxan
+- **[Architecture](./hermes/architecture.md)** - Technical architecture and data flow diagrams
 - **[Configuration Reference](./hermes/configuration.md)** - Detailed config.yaml documentation
 - **[Setup Guide](./hermes/setup.md)** - Termux installation and setup
+- **[Testing Guide](./hermes/testing.md)** - Integration testing documentation
 
 ### Mobile App (Xander Voice App)
 
@@ -149,4 +153,4 @@ When contributing to documentation:
 
 ---
 
-*Last updated: Hermes Migration Complete - xander-engine removed*
+*Last updated: Issue #26 - Documentation updates for Hermes architecture*
