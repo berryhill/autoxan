@@ -21,7 +21,7 @@ See the [Hermes Documentation](../hermes/README.md) for complete backend details
 
 ## Features
 
-### Current (Phase 10)
+### Current (Phase 11)
 
 - ✅ Basic voice interface UI with VoiceButton component
 - ✅ **Speech-to-Text (STT)** - Full implementation using `expo-speech-recognition`
@@ -63,13 +63,19 @@ See the [Hermes Documentation](../hermes/README.md) for complete backend details
   - Visual feedback with animated scale effects
   - Full accessibility support (labels and hints)
   - State-aware button enabling/disabling
+- ✅ **End-to-End Testing Suite** (Phase 11)
+  - 164+ E2E tests covering complete user flows
+  - Dual-mode testing: mocked (CI/CD) and integration (real Hermes)
+  - Test categories: Conversation, Dispatch, Gestures, Audio Focus, Errors
+  - Automated test runner script (`run-e2e.sh`)
+  - Manual testing checklists for device validation
 - ✅ Android permissions configured (RECORD_AUDIO, MODIFY_AUDIO_SETTINGS)
 - ✅ **Unit testing infrastructure** with Jest and React Native Testing Library
   - 234+ unit tests covering all hooks, API, and store
 
 ### Planned
 
-- ⏳ Advanced conversation features (Phase 11+)
+- ⏳ Advanced conversation features (Phase 12+)
 
 ## Quick Start
 
@@ -107,34 +113,44 @@ mobile/
 ├── app.json                         # Expo configuration
 ├── package.json                     # Dependencies
 ├── tsconfig.json                    # TypeScript config
+├── jest.setup.ts                    # Test environment setup
 ├── native-modules/                  # Native platform modules
 │   └── android/                     # Android native modules
 │       ├── README.md                # Integration instructions
 │       └── com/xandervoice/         # Kotlin source files
 │           ├── AudioFocusModule.kt  # Audio focus native module
 │           └── AudioFocusPackage.kt # React package registration
-└── src/
-    ├── components/
-    │   ├── GestureButton.tsx        # Animated gesture button component
-    │   ├── ControlsPanel.tsx        # Gesture controls container (5 buttons)
-    │   ├── index.ts                 # Barrel export
-    │   └── ui/
-    │       └── VoiceButton.tsx      # Voice button component
-    ├── hooks/
-    │   ├── useVoice.ts              # Speech-to-Text hook
-    │   ├── useSpeech.ts             # Text-to-Speech hook
-    │   ├── useAudioFocus.ts         # Audio focus management hook
-    │   ├── useGestures.ts           # Gesture handler hook
-    │   └── index.ts                 # Barrel export
-    ├── types/
-    │   ├── gestures.ts              # Gesture type definitions & GESTURE_CONFIGS
-    │   └── index.ts                 # Barrel export
-    ├── api/
-    │   └── xanderApi.ts             # Hermes HTTP client (OpenRouter-compatible)
-    ├── store/
-    │   └── sessionStore.ts          # Zustand state management
-    └── utils/
-        └── audioFocus.ts            # Audio focus utilities (legacy)
+├── src/
+│   ├── components/
+│   │   ├── GestureButton.tsx        # Animated gesture button component
+│   │   ├── ControlsPanel.tsx        # Gesture controls container (5 buttons)
+│   │   ├── index.ts                 # Barrel export
+│   │   └── ui/
+│   │       └── VoiceButton.tsx      # Voice button component
+│   ├── hooks/
+│   │   ├── useVoice.ts              # Speech-to-Text hook
+│   │   ├── useSpeech.ts             # Text-to-Speech hook
+│   │   ├── useAudioFocus.ts         # Audio focus management hook
+│   │   ├── useGestures.ts           # Gesture handler hook
+│   │   └── index.ts                 # Barrel export
+│   ├── types/
+│   │   ├── gestures.ts              # Gesture type definitions & GESTURE_CONFIGS
+│   │   └── index.ts                 # Barrel export
+│   ├── api/
+│   │   └── xanderApi.ts             # Hermes HTTP client (OpenRouter-compatible)
+│   ├── store/
+│   │   └── sessionStore.ts          # Zustand state management
+│   └── utils/
+│       └── audioFocus.ts            # Audio focus utilities (legacy)
+└── tests/
+    └── e2e/                         # End-to-End test suite
+        ├── setup.ts                 # Test environment and mock fixtures
+        ├── conversation.test.ts     # Conversation flow tests (21 tests)
+        ├── dispatch.test.ts         # Dispatch flow tests (19 tests)
+        ├── gestures.test.ts         # Gesture control tests (40 tests)
+        ├── audioFocus.test.ts       # Audio focus tests (28 tests)
+        ├── errors.test.ts           # Error scenario tests (47 tests)
+        └── run-e2e.sh               # Automated test runner script
 ```
 
 For detailed architecture information, see [Architecture Guide](./architecture.md).
@@ -143,8 +159,10 @@ For detailed architecture information, see [Architecture Guide](./architecture.m
 
 - **[Setup Guide](./setup.md)** - Complete setup instructions
 - **[Architecture](./architecture.md)** - Technical architecture and modules
+- **[E2E Testing Guide](./e2e-testing.md)** - End-to-end testing documentation
 - **[Hermes Backend](../hermes/README.md)** - AI backend overview and API reference
 - **[Hermes Architecture](../hermes/architecture.md)** - Backend architecture and data flow
+- **[Hermes Testing](../hermes/testing.md)** - API integration testing guide
 - **[Project Plan](../../plans/xander-voice-app-plan.md)** - Full project specification
 
 ## Technology Stack
@@ -202,12 +220,14 @@ npx eas build --platform android
 ## Related Documentation
 
 - [Parent Documentation](../README.md) - Autoxan project overview
+- [E2E Testing Guide](./e2e-testing.md) - End-to-end testing documentation
 - [Hermes Agent](../hermes/README.md) - AI backend documentation
 - [Hermes Architecture](../hermes/architecture.md) - Technical architecture details
 - [Hermes Setup](../hermes/setup.md) - Termux installation guide
 - [Hermes Testing](../hermes/testing.md) - Integration testing guide
+- [silas-workstation](../silas-workstation/README.md) - Task dispatch workstation
 - [Project Plan](../../plans/xander-voice-app-plan.md) - Detailed implementation plan
 
 ---
 
-*Last updated: Phase 10 Gesture Controls - Issue #11*
+*Last updated: Phase 11 End-to-End Testing - Issue #12*
