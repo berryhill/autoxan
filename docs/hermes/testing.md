@@ -4,6 +4,8 @@
 
 This guide documents the testing approach for the Hermes Agent integration with the React Native mobile app. It covers automated unit tests, integration tests against a real Hermes instance, and manual testing procedures.
 
+> **Note:** For comprehensive End-to-End testing of the complete voice app flow (including gestures, audio focus, and error handling), see the [Mobile E2E Testing Guide](../mobile/e2e-testing.md).
+
 ## Test Architecture
 
 The testing strategy employs a dual-mode approach:
@@ -359,7 +361,9 @@ Unit tests run automatically in CI without database or network dependencies:
 - **[Hermes Overview](./README.md)** - Architecture and API reference
 - **[Setup Guide](./setup.md)** - Installation instructions
 - **[Configuration](./configuration.md)** - Hermes config.yaml reference
+- **[Mobile App Overview](../mobile/README.md)** - Voice app documentation
 - **[Mobile Architecture](../mobile/architecture.md)** - Mobile app structure
+- **[Mobile E2E Testing](../mobile/e2e-testing.md)** - Comprehensive E2E test suite (164+ tests)
 
 ---
 
