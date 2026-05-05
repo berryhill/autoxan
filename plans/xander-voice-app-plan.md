@@ -306,9 +306,10 @@ autoxan/
 | Component | Technology |
 |-----------|------------|
 | Voice App | React Native (Expo) |
-| Speech-to-Text | `@react-native-voice/voice` |
+| Speech-to-Text | `expo-speech-recognition` |
 | Text-to-Speech | `expo-speech` |
-| Xander (Phone) | Agent in Termux |
+| AI Backend | **Hermes Agent** (Termux) |
+| LLM Provider | OpenRouter / Local |
 | silas-workstation | MCP server with task queue |
 | Communication | HTTP (local), MCP (dispatch) |
 
@@ -387,12 +388,21 @@ autoxan/
 
 ## Setup Requirements
 
-### Termux (Xander - Phone)
+### Termux (Hermes Agent - Xander)
 ```bash
-pkg install nodejs
-# Start Xander agent
-xander start
-# Running at http://localhost:3000
+pkg update && pkg upgrade
+pkg install python python-pip
+pip install hermes-agent
+
+# Configure Hermes
+mkdir -p ~/.hermes
+cp hermes/config.yaml ~/.hermes/
+cp hermes/SOUL.md ~/.hermes/
+
+# Start Hermes server
+hermes serve --http --port 8080
+# OR with MCP support
+hermes serve --mcp --port 8080
 ```
 
 ### silas-workstation
@@ -404,8 +414,7 @@ silas serve --mcp --port 8080
 ```bash
 cd mobile
 npx create-expo-app .
-npx expo install expo-speech
-npm install @react-native-voice/voice
+npx expo install expo-speech expo-speech-recognition
 npx expo run:android
 ```
 
