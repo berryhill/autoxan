@@ -140,37 +140,55 @@ agent:
 
 ### MCP Servers Configuration
 
+The Silas MCP integration is now enabled by default with environment variable configuration:
+
 ```yaml
 mcp_servers:
-  # Silas dispatch server
-  # silas:
-  #   url: "http://workstation-ip:3000"
-  #   tools:
-  #     include: [dispatch_task, check_task_status, list_pending_tasks]
-  #     prompts: false
-  #     resources: false
+  # Silas dispatch server for task execution on workstation
+  silas:
+    # Environment variable for workstation URL (configure in .env)
+    url: "${SILAS_MCP_URL}"
+    tools:
+      include:
+        - dispatch_task
+        - task_status
+        - list_tasks
+        - cancel_task
+        - queue_stats
+      prompts: false
+      resources: false
 ```
 
 | Setting | Description | Notes |
 |---------|-------------|-------|
-| `url` | MCP server endpoint | Replace with actual Silas IP |
-| `tools.include` | Allowed tools | Whitelist specific tools |
-| `prompts` | Enable MCP prompts | Usually `false` for dispatch |
-| `resources` | Enable MCP resources | Usually `false` for dispatch |
+| `url` | MCP server endpoint | Uses `SILAS_MCP_URL` env var |
+| `tools.include` | Allowed tools | Whitelist of Silas tools |
+| `prompts` | Enable MCP prompts | `false` for dispatch-only usage |
+| `resources` | Enable MCP resources | `false` for dispatch-only usage |
 
-**Enabling Silas Dispatch:**
+**Available Silas Tools:**
 
-1. Uncomment the `silas` section
-2. Replace `workstation-ip:3000` with actual IP
-3. Ensure Silas MCP server is running
+| Tool | Description |
+|------|-------------|
+| `dispatch_task` | Create and queue a new task |
+| `task_status` | Check status of a specific task |
+| `list_tasks` | List all tasks (optionally filtered by status) |
+| `cancel_task` | Cancel a pending task |
+| `queue_stats` | Get queue statistics |
 
-```yaml
-mcp_servers:
-  silas:
-    url: "http://192.168.1.100:3000"
-    tools:
-      include: [dispatch_task, check_task_status, list_pending_tasks]
+**Configuring Silas URL:**
+
+Set the `SILAS_MCP_URL` environment variable in `~/.hermes/.env`:
+
+```bash
+# Local network example
+SILAS_MCP_URL=http://192.168.1.100:3000
+
+# Tailscale example (recommended for remote access)
+SILAS_MCP_URL=http://100.x.x.x:3000
 ```
+
+See [Silas Workstation Setup](../silas-workstation/setup.md#network-configuration) for network configuration details.
 
 ### File Read Safety
 
@@ -251,14 +269,24 @@ Details: <detailed description>
 
 ## Environment Variables
 
-Create `~/.hermes/.env` with API keys:
+Create `~/.hermes/.env` with API keys and configuration. You can copy the template from the repository:
 
 ```bash
-# Required: LLM Provider
-OPENROUTER_API_KEY=sk-or-your-key-here
+cp ~/autoxan/hermes/.env.example ~/.hermes/.env
+```
 
-# Alternative: Direct Anthropic
+Then edit with your actual values:
+
+```bash
+# Required: LLM Provider (choose one)
+OPENROUTER_API_KEY=sk-or-your-key-here
 # ANTHROPIC_API_KEY=sk-ant-your-key-here
+
+# Silas Workstation MCP Server
+# Replace with your workstation's actual IP address
+# Local network: http://192.168.1.100:3000
+# Tailscale: http://100.x.x.x:3000
+SILAS_MCP_URL=http://192.168.1.100:3000
 
 # Optional: GitHub integration
 # GITHUB_TOKEN=ghp_your-token-here
@@ -268,9 +296,12 @@ OPENROUTER_API_KEY=sk-or-your-key-here
 |----------|----------|-------------|
 | `OPENROUTER_API_KEY` | Yes* | OpenRouter API key |
 | `ANTHROPIC_API_KEY` | Yes* | Direct Anthropic API key |
+| `SILAS_MCP_URL` | Yes** | Silas workstation URL (e.g., `http://192.168.1.100:3000`) |
 | `GITHUB_TOKEN` | No | For GitHub MCP integration |
 
 *One of `OPENROUTER_API_KEY` or `ANTHROPIC_API_KEY` is required.
+
+**Required if using Silas dispatch. See [Network Configuration](../silas-workstation/setup.md#network-configuration) for setup instructions.
 
 ## Voice-Optimized Settings Summary
 
