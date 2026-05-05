@@ -11,3 +11,6 @@ export type { SpeechOptions, SpeechState, UseSpeechResult } from './useSpeech';
 
 export { useAudioFocus } from './useAudioFocus';
 export type { UseAudioFocusOptions, UseAudioFocusResult } from './useAudioFocus';
+
+export { useGestures } from './useGestures';
+export type { UseGesturesResult } from './useGestures';
