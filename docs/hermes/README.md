@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Hermes Agent serves as the AI backend for Xander, the conversational voice assistant in the Autoxan project. It replaces the legacy `xander-engine` custom implementation with a feature-rich, production-ready AI agent framework.
+Hermes Agent serves as the AI backend for Xander, the conversational voice assistant in the Autoxan project. It provides a feature-rich, production-ready AI agent framework with built-in memory, MCP protocol support, and access to 200+ LLM models via OpenRouter.
 
 ## Design
 

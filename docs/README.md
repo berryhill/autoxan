@@ -23,21 +23,15 @@ autoxan/
 │   │   ├── README.md          # Mobile app overview
 │   │   ├── setup.md           # Setup instructions
 │   │   └── architecture.md    # Architecture documentation
-│   ├── hermes/                # Hermes Agent documentation
-│   │   ├── README.md          # Hermes overview in Autoxan
-│   │   ├── configuration.md   # Configuration reference
-│   │   └── setup.md           # Termux setup guide
-│   └── xander-engine/         # [DEPRECATED] Legacy engine docs
-│       ├── README.md          # Engine overview
-│       ├── setup.md           # Installation & Termux deployment
-│       ├── api-reference.md   # Complete API documentation
-│       └── architecture.md    # Technical architecture
+│   └── hermes/                # Hermes Agent documentation
+│       ├── README.md          # Hermes overview in Autoxan
+│       ├── configuration.md   # Configuration reference
+│       └── setup.md           # Termux setup guide
 ├── hermes/                    # Hermes Agent configuration for Xander
 │   ├── config.yaml            # Hermes settings (model, memory, MCP)
 │   ├── SOUL.md                # Xander personality & system prompt
 │   └── README.md              # Quick start guide
 ├── mobile/                    # Xander Voice App (React Native/Expo)
-├── xander-engine/             # [DEPRECATED] Legacy conversation engine
 └── plans/                     # Project plans and specifications
     ├── xander-voice-app-plan.md        # Detailed project plan
     ├── hermes-architecture-overhaul.md # Migration to Hermes
@@ -46,7 +40,7 @@ autoxan/
 
 ## Architecture Overview
 
-The project uses **Hermes Agent** as the AI backend for the Xander conversational companion. This replaces the legacy `xander-engine` custom implementation.
+The project uses **Hermes Agent** as the AI backend for the Xander conversational companion.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -107,14 +101,8 @@ The actual configuration files are in the `/hermes` directory:
 
 ### Project Plans
 
-- **[Hermes Architecture Overhaul](../plans/hermes-architecture-overhaul.md)** - Migration plan from xander-engine to Hermes
+- **[Hermes Architecture Overhaul](../plans/hermes-architecture-overhaul.md)** - Migration plan to Hermes
 - **[Xander Voice App Plan](../plans/xander-voice-app-plan.md)** - Complete project specification
-
-### Legacy Documentation
-
-> ⚠️ **Note**: The `xander-engine/` directory and its documentation are deprecated. The project has migrated to using Hermes Agent. See the [Hermes documentation](./hermes/README.md) for current architecture.
-
-- **[Engine Overview](./xander-engine/README.md)** - [DEPRECATED] Legacy engine documentation
 
 ## Key Concepts
 
@@ -142,11 +130,11 @@ The project uses [Hermes Agent](https://hermes-agent.nousresearch.com/) as the A
 
 - ✅ **Phase 1: Project Setup** - Expo project initialized with dependencies
 - ✅ **Phase 2: Voice Hooks** - STT/TTS hooks implemented
-- ✅ **Phase 3: Xander API Client** - HTTP client for engine communication
+- ✅ **Phase 3: Xander API Client** - HTTP client for Hermes communication
 - ✅ **Phase 4: State Machine** - Voice flow state management
 - ✅ **Phase 5: Audio Focus** - Native Android audio focus module
 - ✅ **Hermes Configuration** - Xander personality and config created
-- 🔄 **Hermes Integration** - Migrating to Hermes backend
+- ✅ **Hermes Integration** - API client updated for Hermes backend
 - ⏳ **Phase 7-10** - See [project plan](../plans/xander-voice-app-plan.md)
 
 ## Contributing
@@ -161,4 +149,4 @@ When contributing to documentation:
 
 ---
 
-*Last updated: Hermes Architecture Migration*
+*Last updated: Hermes Migration Complete - xander-engine removed*
