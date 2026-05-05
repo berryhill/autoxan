@@ -6,6 +6,11 @@
 # Using OpenRouter for flexibility with multiple providers
 model: anthropic/claude-sonnet-4-20250514
 
+# Server Configuration
+server:
+  port: 8080
+  host: "127.0.0.1"
+
 # Response settings optimized for voice/TTS
 # Keep responses short and natural for spoken output
 tool_output:

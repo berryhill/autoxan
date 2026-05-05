@@ -27,6 +27,25 @@ model: anthropic/claude-sonnet-4-20250514
 - Use `anthropic/claude-3-haiku-20240307` for faster, cheaper responses
 - See [OpenRouter Models](https://openrouter.ai/models) for all options
 
+### Server Configuration
+
+```yaml
+# Server Configuration
+server:
+  port: 8080
+  host: "127.0.0.1"
+```
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| `port` | Port number for Hermes HTTP server | `8080` |
+| `host` | Host address to bind to | `127.0.0.1` |
+
+**Server Configuration Notes:**
+- Default port 8080 is used by the mobile app
+- Use `127.0.0.1` for local-only access (recommended for mobile integration)
+- Can be overridden with `hermes serve --port <port>` command
+
 ### Response Settings
 
 ```yaml
