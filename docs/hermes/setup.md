@@ -39,17 +39,38 @@ python --version
 
 ### Step 2: Install Hermes Agent
 
-**Option A: Install via pip (Recommended)**
+**⚠️ Important:** Hermes is NOT on PyPI - must install from source.
 
-```bash
-pip install hermes-agent
-```
-
-**Option B: Install from source (Latest features)**
+**Option A: Official Install Script (Recommended)**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+source ~/.bashrc
 ```
+
+**Option B: Manual Termux Installation**
+
+```bash
+# Install uv (modern Python package manager)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source ~/.bashrc
+
+# Clone and install
+git clone https://github.com/NousResearch/hermes-agent.git
+cd hermes-agent
+python -m pip install -e '.[termux]' -c constraints-termux.txt
+```
+
+**Option C: Using setup-hermes.sh Script**
+
+```bash
+git clone https://github.com/NousResearch/hermes-agent.git
+cd hermes-agent
+./setup-hermes.sh
+./hermes  # Auto-detects venv
+```
+
+> **⚠️ Termux Note:** Use `[termux]` extra, NOT `[all]`. The `[all]` extra pulls Android-incompatible dependencies (ctranslate2, onnxruntime). Apply `constraints-termux.txt` for tested versions.
 
 ### Step 3: Create Hermes Home Directory
 
@@ -170,14 +191,19 @@ hermes chat "What kind of work do I do?"
 
 ## Troubleshooting
 
+### "hermes-agent not found on PyPI"
+
+Hermes is NOT published to PyPI. You must install from source using one of the methods in Step 2 above.
+
 ### "Command not found: hermes"
 
 ```bash
-# Check if hermes is installed
-pip show hermes-agent
-
 # Add to PATH
 export PATH="$HOME/.local/bin:$PATH"
+
+# Make permanent
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
 ```
 
 ### "API key not found"
@@ -251,10 +277,12 @@ Run with:
 
 ## Updating Hermes
 
-### Update via pip
+### Update from source
 
 ```bash
-pip install --upgrade hermes-agent
+cd ~/hermes-agent
+git pull
+python -m pip install -e '.[termux]' -c constraints-termux.txt
 ```
 
 ### Update configuration
