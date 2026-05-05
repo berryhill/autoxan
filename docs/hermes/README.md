@@ -181,6 +181,18 @@ Details: Find and compare coffee grinders under $200. Look at user reviews, grin
 [/DISPATCH_SUGGESTED]"
 ```
 
+### 5. Integration Testing
+
+Comprehensive integration tests verify the mobile app's communication with Hermes:
+
+- **35+ automated tests** covering health checks, conversations, dispatch detection, memory, and error handling
+- **Dual-mode testing** - unit tests with mocks for CI/CD, integration tests for real Hermes
+- **Manual testing checklist** for full end-to-end verification
+
+Test file: `mobile/src/api/__tests__/hermesIntegration.test.ts`
+
+See the **[Testing Guide](./testing.md)** for complete documentation.
+
 ## Usage Examples
 
 ### Basic Conversation
@@ -208,6 +220,7 @@ hermes chat "Create a Python script to analyze my git commit history"
 
 - **[Configuration Reference](./configuration.md)** - Detailed config.yaml documentation
 - **[Setup Guide](./setup.md)** - Termux installation instructions
+- **[Testing Guide](./testing.md)** - Integration testing documentation
 - **[Mobile App](../mobile/README.md)** - React Native voice UI
 - **[Architecture Overhaul Plan](../../plans/hermes-architecture-overhaul.md)** - Migration context
 
