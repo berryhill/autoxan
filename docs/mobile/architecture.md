@@ -592,20 +592,31 @@ function App() {
 
 #### XanderApi (`src/api/xanderApi.ts`)
 
-Full HTTP client for communicating with the Xander agent running in Termux on the phone.
+Full HTTP client for communicating with the Hermes agent running in Termux on the phone. Uses OpenRouter-compatible chat completion endpoints for AI interactions.
 
 **Purpose:**
-- Send user messages to Xander and receive responses
+- Send user messages to Hermes and receive responses via OpenRouter-compatible endpoint
 - Session management (start, end, retrieve sessions)
+- Conversation history tracking (local)
+- Dispatch block parsing for Silas task suggestions
 - Dispatch functionality to silas-workstation
-- Health check for Xander availability
+- Health check for Hermes availability
 - Handle connection errors gracefully with user-friendly messages
 
 **Configuration:**
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `baseUrl` | `http://localhost:3000` | Xander agent URL |
+| `baseUrl` | `http://localhost:8080` | Hermes agent URL (default Hermes port) |
 | `timeout` | `30000` | Request timeout (ms) |
+
+**Hermes Endpoints:**
+```typescript
+const HERMES_ENDPOINTS = {
+  chat: '/v1/chat/completions', // OpenRouter-compatible chat endpoint
+  health: '/health',            // Health check endpoint
+  session: '/session',          // Session management endpoint
+};
+```
 
 **Constructor:**
 ```typescript
@@ -616,14 +627,21 @@ const api = new XanderApi({ baseUrl?: string, timeout?: number });
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `startSession()` | `Promise<XanderSession>` | Creates a new conversation session. Falls back to local session if server unavailable |
-| `endSession()` | `Promise<void>` | Ends the current session (clears session ID even if server call fails) |
-| `getSession()` | `Promise<XanderSession \| null>` | Retrieves current session data. Returns minimal session if server unreachable |
+| `endSession()` | `Promise<void>` | Ends the current session (clears session ID and conversation history even if server call fails) |
+| `getSession()` | `Promise<XanderSession \| null>` | Retrieves current session data. Returns minimal session with local history if server unreachable |
 | `getSessionId()` | `string \| null` | Returns current session ID synchronously |
 
 **Message Handling Methods:**
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `sendMessage(message)` | `Promise<XanderResponse>` | Sends message to Xander with auto-session creation. Validates message (rejects empty/whitespace). Returns response with optional dispatch suggestions |
+| `sendMessage(message)` | `Promise<XanderResponse>` | Sends message to Hermes via OpenRouter chat completion. Auto-creates session, maintains conversation history, parses dispatch blocks. Returns clean response with dispatch metadata |
+| `sendChatCompletion(request)` | `Promise<HermesChatResponse>` | Raw OpenRouter-compatible chat completion request for advanced use cases |
+
+**Conversation History Methods:**
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `getConversationHistory()` | `HermesMessage[]` | Returns a copy of the current conversation history |
+| `clearHistory()` | `void` | Clears conversation history without ending the session (useful for topic changes) |
 
 **Dispatch Methods:**
 | Method | Returns | Description |
@@ -634,11 +652,121 @@ const api = new XanderApi({ baseUrl?: string, timeout?: number });
 **Health & Configuration Methods:**
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `healthCheck()` | `Promise<boolean>` | Detects Xander availability via /health endpoint |
+| `healthCheck()` | `Promise<boolean>` | Detects Hermes availability via /health endpoint |
 | `getBaseUrl()` | `string` | Returns the current base URL |
 | `setBaseUrl(url)` | `void` | Updates the base URL (useful for testing or configuration changes) |
 
-**Core Types:**
+**Hermes-Specific Types:**
+```typescript
+/**
+ * Message format for Hermes/OpenRouter chat API
+ */
+interface HermesMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
+/**
+ * Request body for Hermes chat completions (OpenRouter format)
+ */
+interface HermesChatRequest {
+  model?: string;
+  messages: HermesMessage[];
+  max_tokens?: number;
+  temperature?: number;
+  stream?: boolean;
+}
+
+/**
+ * Choice from Hermes/OpenRouter response
+ */
+interface HermesChoice {
+  index: number;
+  message: HermesMessage;
+  finish_reason: string | null;
+}
+
+/**
+ * Raw response from Hermes/OpenRouter chat completions endpoint
+ */
+interface HermesChatCompletionResponse {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: HermesChoice[];
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
+/**
+ * Parsed dispatch information from response content
+ */
+interface HermesDispatch {
+  suggested: boolean;
+  summary?: string;
+  details?: string;
+}
+
+/**
+ * Processed chat response with parsed dispatch info
+ */
+interface HermesChatResponse {
+  response: string;        // Clean response without dispatch block
+  dispatch?: HermesDispatch;
+  rawContent: string;      // Original response with dispatch block
+}
+
+/**
+ * Session data from Hermes
+ */
+interface HermesSessionResponse {
+  sessionId: string;
+  messages: HermesMessage[];
+}
+```
+
+**Dispatch Block Parsing:**
+
+Hermes responses may contain dispatch blocks when Xander suggests a task for Silas. The API automatically parses and removes these blocks from the displayed response.
+
+**Format:**
+```
+[DISPATCH_SUGGESTED]
+Summary: Brief task description
+Details: Detailed task instructions
+[/DISPATCH_SUGGESTED]
+```
+
+**Parsing Functions:**
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `parseDispatchBlock(content)` | `(content: string) => HermesDispatch` | Extracts dispatch info from response content. Returns `{ suggested: true, summary, details }` if found, `{ suggested: false }` otherwise |
+| `removeDispatchBlock(content)` | `(content: string) => string` | Removes dispatch block from content for clean display. Normalizes whitespace |
+
+**Example Dispatch Block:**
+```
+User: "Can you research the best coffee grinders under $200?"
+
+Hermes Response:
+"That sounds like a good research task for Silas - he can dig deep into reviews and comparisons.
+
+[DISPATCH_SUGGESTED]
+Summary: Research best coffee grinders under $200
+Details: Find and compare coffee grinders under $200. Look at user reviews, grind consistency, durability, and value. Provide top 3-5 recommendations with pros/cons.
+[/DISPATCH_SUGGESTED]"
+
+After parsing:
+- response: "That sounds like a good research task for Silas..."
+- dispatch.suggested: true
+- dispatch.summary: "Research best coffee grinders under $200"
+- dispatch.details: "Find and compare coffee grinders..."
+```
+
+**Core Types (OpenRouter-compatible):**
 ```typescript
 interface Message {
   role: 'user' | 'assistant';
@@ -694,6 +822,7 @@ interface XanderResponse {
     researchPerformed?: boolean;
     suggestDispatch?: boolean;
     dispatchSummary?: string;
+    dispatchDetails?: string;  // New: detailed dispatch information
     [key: string]: unknown;
   };
 }
@@ -716,37 +845,55 @@ The API converts axios errors to user-friendly `XanderApiError` objects:
 
 | Error Code | Condition | Message |
 |------------|-----------|---------|
-| `CONNECTION_REFUSED` | Cannot connect to Xander | "Cannot connect to Xander. Make sure Xander is running in Termux." |
-| `TIMEOUT` | Request timed out | "Request to Xander timed out. Please try again." |
-| `NETWORK_ERROR` | Network unreachable | "Network error. Check your connection and make sure Xander is running." |
+| `CONNECTION_REFUSED` | Cannot connect to Hermes | "Cannot connect to Hermes. Make sure Hermes is running in Termux." |
+| `TIMEOUT` | Request timed out | "Request to Hermes timed out. Please try again." |
+| `NETWORK_ERROR` | Network unreachable | "Network error. Check your connection and make sure Hermes is running." |
 | `BAD_REQUEST` | HTTP 400 | Server-provided message or "Invalid request. Please check your input." |
 | `UNAUTHORIZED` | HTTP 401 | "Authentication required." |
 | `NOT_FOUND` | HTTP 404 | "The requested resource was not found." |
-| `SERVER_ERROR` | HTTP 500 | "Xander encountered an internal error. Please try again." |
-| `SERVICE_UNAVAILABLE` | HTTP 503 | "Xander is temporarily unavailable. Please try again later." |
+| `SERVER_ERROR` | HTTP 500 | "Hermes encountered an internal error. Please try again." |
+| `SERVICE_UNAVAILABLE` | HTTP 503 | "Hermes is temporarily unavailable. Please try again later." |
 | `INVALID_MESSAGE` | Empty message sent | "Message cannot be empty" |
+| `INVALID_RESPONSE` | No response from Hermes | "No response from Hermes" |
 
 **Graceful Fallbacks:**
 - `startSession()`: Creates local session (`local-session-{timestamp}`) when server unavailable
-- `getSession()`: Returns minimal session object when server unreachable
-- `endSession()`: Clears local session ID even if server call fails
+- `getSession()`: Returns minimal session object with local conversation history when server unreachable
+- `endSession()`: Clears local session ID and conversation history even if server call fails
 
-**Status:** ✅ Complete
+**Status:** ✅ Complete (Updated for Hermes integration)
 
 **Usage Examples:**
 
-Basic conversation:
+Basic conversation with Hermes:
 ```tsx
 import { xanderApi } from '@/api';
 
 // Send a message (auto-creates session if needed)
 const response = await xanderApi.sendMessage("Hello Xander");
-console.log(response.message);
+console.log(response.message); // Clean response without dispatch block
 
 // Check if dispatch was suggested
 if (response.metadata?.suggestDispatch) {
   console.log('Dispatch suggestion:', response.metadata.dispatchSummary);
+  console.log('Details:', response.metadata.dispatchDetails);
 }
+```
+
+Conversation history management:
+```tsx
+import { xanderApi } from '@/api';
+
+// Send multiple messages (history is maintained)
+await xanderApi.sendMessage("Hello!");
+await xanderApi.sendMessage("What's the weather like?");
+
+// Get conversation history
+const history = xanderApi.getConversationHistory();
+console.log('Messages in history:', history.length);
+
+// Clear history to start a new topic without new session
+xanderApi.clearHistory();
 ```
 
 Session management:
@@ -760,8 +907,30 @@ console.log('Session ID:', session.sessionId);
 // Get current session
 const currentSession = await xanderApi.getSession();
 
-// End session when done
+// End session when done (clears history)
 await xanderApi.endSession();
+```
+
+Advanced: Raw chat completion:
+```tsx
+import { xanderApi, HermesChatRequest } from '@/api';
+
+// Send raw OpenRouter-compatible request
+const request: HermesChatRequest = {
+  messages: [
+    { role: 'system', content: 'You are a helpful assistant.' },
+    { role: 'user', content: 'Explain quantum computing briefly.' }
+  ],
+  temperature: 0.7,
+  max_tokens: 500
+};
+
+const result = await xanderApi.sendChatCompletion(request);
+console.log('Response:', result.response);
+console.log('Raw content:', result.rawContent);
+if (result.dispatch?.suggested) {
+  console.log('Dispatch suggested:', result.dispatch.summary);
+}
 ```
 
 Dispatching work to Silas:
@@ -787,14 +956,14 @@ Health check and configuration:
 ```tsx
 import { xanderApi } from '@/api';
 
-// Check if Xander is available
+// Check if Hermes is available
 const isAvailable = await xanderApi.healthCheck();
 if (!isAvailable) {
-  console.log('Xander is not running');
+  console.log('Hermes is not running');
 }
 
 // Update base URL for testing
-xanderApi.setBaseUrl('http://192.168.1.100:3000');
+xanderApi.setBaseUrl('http://192.168.1.100:8080');
 console.log('Current URL:', xanderApi.getBaseUrl());
 ```
 
@@ -804,9 +973,30 @@ import XanderApi from '@/api';
 
 // Create custom instance with different config
 const customApi = new XanderApi({
-  baseUrl: 'http://custom-host:3000',
+  baseUrl: 'http://custom-host:8080',
   timeout: 60000 // 60 seconds
 });
+```
+
+Parsing dispatch blocks manually:
+```tsx
+import { parseDispatchBlock, removeDispatchBlock } from '@/api';
+
+const content = `Here's my response.
+
+[DISPATCH_SUGGESTED]
+Summary: Research task
+Details: Research the topic thoroughly
+[/DISPATCH_SUGGESTED]`;
+
+const dispatch = parseDispatchBlock(content);
+if (dispatch.suggested) {
+  console.log('Summary:', dispatch.summary);
+  console.log('Details:', dispatch.details);
+}
+
+const cleanContent = removeDispatchBlock(content);
+console.log('Display:', cleanContent); // "Here's my response."
 ```
 
 ---
@@ -1298,4 +1488,4 @@ export const useNewStore = create<NewStoreState>((set) => ({
 
 ---
 
-*Last updated: Phase 5 - Audio Focus Management - Native Module (Android audio focus management with native Kotlin module, useAudioFocus hook, and platform-aware behavior)*
+*Last updated: Hermes Integration - Updated XanderApi to use Hermes agent (port 8080) with OpenRouter-compatible chat completions, dispatch block parsing, conversation history management, and new methods (getConversationHistory, sendChatCompletion, clearHistory)*

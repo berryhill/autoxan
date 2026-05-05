@@ -46,6 +46,81 @@ The architecture positions Hermes as the central AI processing unit running in T
 
 4. **Dispatch Integration**: Uses Hermes's built-in MCP protocol to dispatch tasks to the Silas workstation agent.
 
+## API Endpoints
+
+Hermes exposes an OpenRouter-compatible HTTP API for the React Native mobile app to communicate with.
+
+### Default Configuration
+
+| Setting | Value | Description |
+|---------|-------|-------------|
+| **Base URL** | `http://localhost:8080` | Default Hermes port |
+| **Timeout** | 30 seconds | Request timeout |
+
+### Endpoint Reference
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/v1/chat/completions` | POST | OpenRouter-compatible chat completion endpoint |
+| `/health` | GET | Health check endpoint |
+| `/session` | POST | Create new session |
+| `/session/:id` | GET | Get session by ID |
+| `/session/:id` | DELETE | End/delete session |
+
+### Chat Completion Request Format
+
+The chat endpoint accepts OpenRouter-compatible requests:
+
+```typescript
+interface HermesChatRequest {
+  model?: string;           // Optional model override
+  messages: {
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+  }[];
+  max_tokens?: number;      // Maximum response tokens
+  temperature?: number;     // Sampling temperature
+  stream?: boolean;         // Streaming (set to false)
+}
+```
+
+### Chat Completion Response Format
+
+```typescript
+interface HermesChatCompletionResponse {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: [{
+    index: number;
+    message: {
+      role: 'assistant';
+      content: string;      // May contain dispatch blocks
+    };
+    finish_reason: string | null;
+  }];
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+```
+
+### Dispatch Block Format
+
+When Xander suggests a task for Silas, the response content includes a dispatch block:
+
+```
+[DISPATCH_SUGGESTED]
+Summary: Brief task description
+Details: Detailed instructions for the task
+[/DISPATCH_SUGGESTED]
+```
+
+The mobile app parses these blocks and displays them separately from the main response.
+
 ## Dependencies
 
 | Dependency | Purpose |
