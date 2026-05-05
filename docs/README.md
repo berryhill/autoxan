@@ -23,17 +23,29 @@ autoxan/
 │   │   ├── README.md          # Mobile app overview
 │   │   ├── setup.md           # Setup instructions
 │   │   └── architecture.md    # Architecture documentation
-│   └── hermes/                # Hermes Agent documentation
-│       ├── README.md          # Hermes overview in Autoxan
+│   ├── hermes/                # Hermes Agent documentation
+│   │   ├── README.md          # Hermes overview in Autoxan
+│   │   ├── architecture.md    # Technical architecture & data flow
+│   │   ├── configuration.md   # Configuration reference
+│   │   ├── setup.md           # Termux setup guide
+│   │   └── testing.md         # Integration testing guide
+│   └── silas-workstation/     # Silas Workstation documentation
+│       ├── README.md          # Silas overview and features
 │       ├── architecture.md    # Technical architecture & data flow
-│       ├── configuration.md   # Configuration reference
-│       ├── setup.md           # Termux setup guide
-│       └── testing.md         # Integration testing guide
+│       ├── setup.md           # Setup and running instructions
+│       └── api.md             # MCP API reference
 ├── hermes/                    # Hermes Agent configuration for Xander
 │   ├── config.yaml            # Hermes settings (model, memory, MCP)
 │   ├── SOUL.md                # Xander personality & system prompt
 │   └── README.md              # Quick start guide
 ├── mobile/                    # Xander Voice App (React Native/Expo)
+├── silas-workstation/         # Silas Workstation task queue
+│   ├── src/                   # TypeScript source code
+│   │   ├── mcp/               # MCP server implementation
+│   │   ├── services/          # Task queue service
+│   │   └── types/             # Type definitions
+│   ├── package.json           # Dependencies and scripts
+│   └── README.md              # Quick start guide
 └── plans/                     # Project plans and specifications
     ├── xander-voice-app-plan.md        # Detailed project plan
     ├── hermes-architecture-overhaul.md # Migration to Hermes (historical)
@@ -95,6 +107,13 @@ The project uses **Hermes Agent** as the AI backend for the Xander conversationa
 - **[Setup Guide](./mobile/setup.md)** - How to set up and run the mobile app
 - **[Architecture](./mobile/architecture.md)** - Technical architecture and module documentation
 
+### Silas Workstation (Task Queue)
+
+- **[Silas Overview](./silas-workstation/README.md)** - Introduction to Silas Workstation
+- **[Architecture](./silas-workstation/architecture.md)** - Technical architecture and data flow
+- **[Setup Guide](./silas-workstation/setup.md)** - Installation and running instructions
+- **[API Reference](./silas-workstation/api.md)** - MCP tool documentation
+
 ### Hermes Configuration Files
 
 The actual configuration files are in the `/hermes` directory:
@@ -139,7 +158,8 @@ The project uses [Hermes Agent](https://hermes-agent.nousresearch.com/) as the A
 - ✅ **Phase 5: Audio Focus** - Native Android audio focus module
 - ✅ **Hermes Configuration** - Xander personality and config created
 - ✅ **Hermes Integration** - API client updated for Hermes backend
-- ⏳ **Phase 7-10** - See [project plan](../plans/xander-voice-app-plan.md)
+- ✅ **Phase 9: Silas Task Queue** - MCP server, task queue, and execution engine implemented
+- ⏳ **Phase 10+** - See [project plan](../plans/xander-voice-app-plan.md)
 
 ## Contributing
 
@@ -153,4 +173,4 @@ When contributing to documentation:
 
 ---
 
-*Last updated: Issue #26 - Documentation updates for Hermes architecture*
+*Last updated: Issue #10 - Silas Workstation task queue documentation*
