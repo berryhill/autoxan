@@ -87,6 +87,7 @@ Test Files:
     gestures             Run gesture control tests
     audioFocus           Run audio focus tests
     errors               Run error scenario tests
+    mcpDispatch          Run MCP dispatch integration tests
 
 Examples:
     ./run-e2e.sh                     # Run all E2E tests (mocked)
@@ -131,7 +132,7 @@ parse_args() {
                 show_help
                 exit 0
                 ;;
-            conversation|dispatch|gestures|audioFocus|errors)
+            conversation|dispatch|gestures|audioFocus|errors|mcpDispatch)
                 SPECIFIC_TEST="$1"
                 shift
                 ;;

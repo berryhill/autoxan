@@ -363,7 +363,19 @@ Unit tests run automatically in CI without database or network dependencies:
 - **[Configuration](./configuration.md)** - Hermes config.yaml reference
 - **[Mobile App Overview](../mobile/README.md)** - Voice app documentation
 - **[Mobile Architecture](../mobile/architecture.md)** - Mobile app structure
-- **[Mobile E2E Testing](../mobile/e2e-testing.md)** - Comprehensive E2E test suite (164+ tests)
+- **[Mobile E2E Testing](../mobile/e2e-testing.md)** - Comprehensive E2E test suite (189+ tests)
+- **[silas-workstation API](../silas-workstation/api.md)** - Task dispatch API reference
+
+### MCP Dispatch Integration Tests
+
+The E2E test suite includes dedicated MCP (Model Context Protocol) dispatch tests (`mcpDispatch.test.ts`) that validate integration with silas-workstation via MCP tools:
+
+- **dispatch_task**: Dispatching tasks via MCP tool (4 tests)
+- **task_status**: Retrieving task status by ID (4 tests)
+- **list_tasks**: Listing tasks with filters (6 tests)
+- **Error Handling**: Graceful error handling (6 tests)
+
+For full details, see the [MCP Dispatch Tests section](../mobile/e2e-testing.md#6-mcp-dispatch-tests-20-tests) in the Mobile E2E Testing Guide.
 
 ---
 
